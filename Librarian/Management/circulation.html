@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Complete | Circulation Desk with Patron Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #eef2ff;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fed7aa;
+            --info: #0ea5e9;
+            --info-light: #e0f2fe;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.25rem 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .logo p {
+            font-size: 0.7rem;
+            color: var(--gray-600);
+        }
+
+        .stats {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: var(--gray-50);
+            padding: 0.5rem 1.25rem;
+            border-radius: 1rem;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--gray-600);
+            text-transform: uppercase;
+        }
+
+        /* Patron Card */
+        .patron-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .patron-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .patron-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .patron-details h3 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .patron-details p {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+
+        .patron-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .patron-status.active {
+            background: var(--success-light);
+            color: #065f46;
+        }
+
+        .patron-status.suspended {
+            background: var(--danger-light);
+            color: #991b1b;
+        }
+
+        .clear-patron {
+            background: var(--gray-100);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+
+        /* Action Panel */
+        .action-panel {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--gray-200);
+            padding-bottom: 0.75rem;
+        }
+
+        .mode-tab {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 2rem;
+            transition: all 0.2s;
+            color: var(--gray-600);
+            font-size: 0.85rem;
+        }
+
+        .mode-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .scan-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gray-600);
+        }
+
+        .input-group input {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            font-family: monospace;
+            transition: all 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        /* Book Scanner Panel - IMPROVED for Check In */
+        .scanner-panel {
+            background: var(--gray-50);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 0;
+            border: 2px solid var(--gray-200);
+        }
+
+        .scanner-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .scanner-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .scanner-icon {
+            font-size: 1.5rem;
+        }
+
+        .scan-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .scan-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .scan-input-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gray-600);
+        }
+
+        .scan-input-group input {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            font-family: monospace;
+            background: white;
+        }
+
+        .scan-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .scan-input-group input:read-only {
+            background: var(--gray-100);
+            cursor: default;
+        }
+
+        /* Book Result Panel - Enhanced */
+        .book-result {
+            margin-top: 1rem;
+            padding: 1.25rem;
+            background: white;
+            border-radius: 1rem;
+            display: none;
+            animation: slideDown 0.3s ease;
+            border: 2px solid var(--primary-light);
+        }
+
+        .book-result.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .book-detail {
+            text-align: left;
+            flex: 2;
+        }
+
+        .book-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .book-meta {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            margin-top: 0.25rem;
+        }
+
+        .patron-detail {
+            flex: 1;
+            text-align: right;
+            padding: 0.5rem 1rem;
+            background: var(--primary-light);
+            border-radius: 1rem;
+        }
+
+        .patron-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--primary-dark);
+        }
+
+        .patron-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .due-info {
+            text-align: center;
+            padding: 0.5rem 1rem;
+            background: var(--gray-100);
+            border-radius: 1rem;
+            min-width: 120px;
+        }
+
+        .due-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--gray-600);
+        }
+
+        .due-date {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .due-date.overdue {
+            color: var(--danger);
+        }
+
+        .fine-amount {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .fine-amount.positive {
+            color: var(--danger);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        /* Circulation Table */
+        .circulation-table {
+            background: white;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .table-header {
+            padding: 1rem 1.5rem;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            border: 1px solid var(--gray-200);
+            background: white;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            background: var(--gray-50);
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--gray-600);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.8rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+
+        .status-borrowed { background: var(--info-light); color: #0369a1; }
+        .status-overdue { background: var(--danger-light); color: #991b1b; animation: pulse 1.5s infinite; }
+        .status-renewed { background: var(--success-light); color: #065f46; }
+        .status-returned { background: var(--gray-100); color: var(--gray-600); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .btn-icon {
+            padding: 0.25rem 0.7rem;
+            border-radius: 1.5rem;
+            border: none;
+            font-size: 0.65rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0.2rem;
+        }
+
+        .btn-renew {
+            background: var(--info-light);
+            color: #0369a1;
+        }
+
+        .btn-return {
+            background: var(--warning-light);
+            color: #9a3412;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--gray-800);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .info-note {
+            background: var(--info-light);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.7rem;
+            color: #0369a1;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .scan-area { grid-template-columns: 1fr; }
+            .scan-row { grid-template-columns: 1fr; }
+            .stats { gap: 0.5rem; }
+            .stat-card { padding: 0.5rem 0.8rem; }
+            .result-details { flex-direction: column; text-align: center; }
+            .patron-detail { text-align: center; width: 100%; }
+            .due-info { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header">
+        <div class="logo">
+            <h1> Circulation Desk</h1>
+            <p>Complete Check Out / Check In with RFID Integration</p>
+        </div>
+        <div class="stats" id="statsPanel">
+            <div class="stat-card">
+                <div class="stat-number" id="activeLoansCount">0</div>
+                <div class="stat-label">Active Loans</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="overdueCount">0</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalFineAmount">$0</div>
+                <div class="stat-label">Total Fines</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patron Verification Card -->
+    <div id="patronCard" class="patron-card" style="display: none;">
+        <div class="patron-info">
+            <div class="patron-avatar" id="patronAvatar">👤</div>
+            <div class="patron-details">
+                <h3 id="patronName">-</h3>
+                <p id="patronId">RFID: -</p>
+            </div>
+            <span id="patronStatus" class="patron-status active">Active</span>
+        </div>
+        <button class="clear-patron" onclick="clearPatronSession()">✕ Clear Patron</button>
+    </div>
+
+    <!-- Action Panel -->
+    <div class="action-panel">
+        <div class="mode-tabs">
+            <button class="mode-tab active" data-mode="checkout" onclick="setMode('checkout')">📖 Check Out (Borrow)</button>
+            <button class="mode-tab" data-mode="return" onclick="setMode('return')">📎 Check In / Return</button>
+        </div>
+
+        <!-- Checkout Mode -->
+        <div id="checkoutMode" style="display: block;">
+            <div class="scan-area">
+                <div class="input-group">
+                    <label>👤 Scan Patron RFID First</label>
+                    <input type="text" id="checkoutPatronInput" placeholder="Scan patron RFID card..." autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label>📕 Scan Book RFID</label>
+                    <input type="text" id="checkoutBookInput" placeholder="Scan book RFID tag..." autocomplete="off">
+                </div>
+                <button class="btn-primary" onclick="processCheckout()">▶ Check Out</button>
+            </div>
+            <div class="info-note">
+                💡 Tip: First scan patron RFID, then scan book RFID to complete checkout
+            </div>
+        </div>
+
+        <!-- Return/Renew Mode - IMPROVED: Shows both Book RFID and Patron Info -->
+        <div id="returnMode" style="display: none;">
+            <div class="scanner-panel">
+                <div class="scanner-header">
+                    <div class="scanner-title">
+                        <span class="scanner-icon">🔍</span>
+                        <span>Return / Check In Process</span>
+                    </div>
+                    <div class="info-note" style="margin:0; padding:0.3rem 0.8rem;">
+                        ℹ️ Scan Book RFID to see patron and due info
+                    </div>
+                </div>
+
+                <!-- Book RFID Scanner -->
+                <div class="scan-row">
+                    <div class="scan-input-group">
+                        <label>📕 Scan Book RFID</label>
+                        <input type="text" id="scanBookRfid" placeholder="Scan or type book RFID..." autocomplete="off">
+                    </div>
+                    <div class="scan-input-group">
+                        <label>👤 Borrowing Patron (Auto-fetched)</label>
+                        <input type="text" id="fetchedPatronInfo" readonly placeholder="Will appear after scanning book..." style="background: var(--gray-100);">
+                    </div>
+                </div>
+                
+                <!-- Book Result Panel with Full Details -->
+                <div id="bookResultPanel" class="book-result">
+                    <div class="result-details">
+                        <div class="book-detail">
+                            <div class="book-title" id="resultBookTitle">-</div>
+                            <div class="book-meta" id="resultBookId">RFID: -</div>
+                            <div class="book-meta" id="resultAuthor">Author: -</div>
+                        </div>
+                        <div class="patron-detail">
+                            <div class="patron-label">Currently Borrowed By</div>
+                            <div class="patron-name" id="resultPatronName">-</div>
+                            <div class="book-meta" id="resultPatronId">Patron ID: -</div>
+                        </div>
+                        <div class="due-info">
+                            <div class="due-label">Due Date</div>
+                            <div class="due-date" id="resultDueDate">-</div>
+                            <div class="book-meta" id="resultFine">Fine: $0.00</div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-primary btn-success" onclick="processReturn()">✅ Confirm Check In / Return</button>
+                        <button class="btn-primary btn-warning" onclick="processRenew()">⟳ Renew Book (Extend)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Circulation Table -->
+    <div class="circulation-table">
+        <div class="table-header">
+            <h3>📋 Circulation Records</h3>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all" onclick="filterTransactions('all')">All</button>
+                <button class="filter-btn" data-filter="active" onclick="filterTransactions('active')">Active</button>
+                <button class="filter-btn" data-filter="overdue" onclick="filterTransactions('overdue')">Overdue</button>
+                <button class="filter-btn" data-filter="returned" onclick="filterTransactions('returned')">Returned</button>
+            </div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Book / RFID</th>
+                        <th>Patron</th>
+                        <th>Checkout Date</th>
+                        <th>Due Date</th>
+                        <th>Fine</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Mock Database
+    let transactions = [
+        {
+            id: "TR001",
+            bookId: "RFID-BK202",
+            bookTitle: "Data Structures & Algorithms",
+            author: "Thomas Cormen",
+            patronId: "RFID-PAT1001",
+            patronName: "Alice Henderson",
+            patronEmail: "alice@library.com",
+            checkoutDate: "2026-04-15",
+            dueDate: "2026-05-01",
+            returnDate: null,
+            renewedCount: 0,
+            maxRenewals: 1,
+            status: "overdue",
+            finePerDay: 0.50,
+            finePaid: false
+        },
+        {
+            id: "TR002",
+            bookId: "RFID-BK505",
+            bookTitle: "Modern Artificial Intelligence",
+            author: "Stuart Russell",
+            patronId: "RFID-PAT2023",
+            patronName: "Markus Wright",
+            patronEmail: "markus@library.com",
+            checkoutDate: "2026-05-06",
+            dueDate: "2026-05-20",
+            returnDate: null,
+            renewedCount: 0,
+            maxRenewals: 1,
+            status: "borrowed",
+            finePerDay: 0.50,
+            finePaid: false
+        },
+        {
+            id: "TR003",
+            bookId: "RFID-BK101",
+            bookTitle: "The Pragmatic Programmer",
+            author: "Andrew Hunt",
+            patronId: "RFID-PAT0456",
+            patronName: "Elena Rodriguez",
+            patronEmail: "elena@library.com",
+            checkoutDate: "2026-05-01",
+            dueDate: "2026-05-15",
+            returnDate: null,
+            renewedCount: 0,
+            maxRenewals: 1,
+            status: "overdue",
+            finePerDay: 0.50,
+            finePaid: false
+        }
+    ];
+
+    // Patron Database
+    const patronDB = {
+        "RFID-PAT1001": { name: "Alice Henderson", email: "alice@library.com", status: "active", fines: 0 },
+        "RFID-PAT2023": { name: "Markus Wright", email: "markus@library.com", status: "active", fines: 0 },
+        "RFID-PAT0456": { name: "Elena Rodriguez", email: "elena@library.com", status: "active", fines: 2.50 },
+        "RFID-PAT0999": { name: "John Smith", email: "john@library.com", status: "suspended", fines: 15.00 }
+    };
+
+    // Book Database
+    const bookDB = {
+        "RFID-BK202": { title: "Data Structures & Algorithms", author: "Thomas Cormen" },
+        "RFID-BK505": { title: "Modern Artificial Intelligence", author: "Stuart Russell" },
+        "RFID-BK101": { title: "The Pragmatic Programmer", author: "Andrew Hunt" },
+        "RFID-BK777": { title: "Cloud Computing Essentials", author: "Michael Smith" },
+        "RFID-BK888": { title: "Cybersecurity Fundamentals", author: "Kevin Mitnick" }
+    };
+
+    let currentMode = "checkout";
+    let currentFilter = "all";
+    let currentPatron = null;
+    let currentScannedBook = null;
+
+    function showToast(message, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.background = isError ? '#ef4444' : '#10b981';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function verifyPatron(patronId) {
+        const patron = patronDB[patronId];
+        if (!patron) {
+            showToast(`❌ Patron not found: ${patronId}`, true);
+            return null;
+        }
+        if (patron.status === "suspended") {
+            showToast(`⚠️ Patron ${patron.name} is SUSPENDED. Outstanding fines: $${patron.fines}`, true);
+            return null;
+        }
+        return { id: patronId, ...patron };
+    }
+
+    function setPatronSession(patronId) {
+        const patron = verifyPatron(patronId);
+        if (patron) {
+            currentPatron = patron;
+            document.getElementById('patronCard').style.display = 'flex';
+            document.getElementById('patronName').textContent = patron.name;
+            document.getElementById('patronId').textContent = `RFID: ${patronId}`;
+            document.getElementById('patronAvatar').textContent = patron.name.charAt(0);
+            const statusSpan = document.getElementById('patronStatus');
+            statusSpan.textContent = patron.status === 'active' ? '✓ Active' : '⚠️ Suspended';
+            statusSpan.className = `patron-status ${patron.status === 'active' ? 'active' : 'suspended'}`;
+            showToast(`✅ Patron verified: ${patron.name}`, false);
+            return true;
+        }
+        return false;
+    }
+
+    function clearPatronSession() {
+        currentPatron = null;
+        document.getElementById('patronCard').style.display = 'none';
+        document.getElementById('checkoutPatronInput').value = '';
+        document.getElementById('checkoutBookInput').value = '';
+        showToast("Patron session cleared", false);
+    }
+
+    function findBookByRfid(rfid) {
+        const transaction = transactions.find(t => t.bookId === rfid && !t.returnDate);
+        if (transaction) {
+            const fine = calculateFine(transaction.dueDate);
+            const isOverdue = new Date(transaction.dueDate) < new Date();
+            
+            currentScannedBook = transaction;
+            document.getElementById('resultBookTitle').textContent = transaction.bookTitle;
+            document.getElementById('resultBookId').textContent = `RFID: ${transaction.bookId}`;
+            document.getElementById('resultAuthor').textContent = `Author: ${transaction.author || 'Unknown'}`;
+            document.getElementById('resultPatronName').textContent = transaction.patronName;
+            document.getElementById('resultPatronId').textContent = `ID: ${transaction.patronId}`;
+            document.getElementById('resultDueDate').textContent = transaction.dueDate;
+            document.getElementById('resultDueDate').className = `due-date ${isOverdue ? 'overdue' : ''}`;
+            
+            const fineElement = document.getElementById('resultFine');
+            fineElement.textContent = fine > 0 ? `Fine: $${fine.toFixed(2)}` : 'Fine: $0.00';
+            fineElement.className = fine > 0 ? 'fine-amount positive' : 'fine-amount';
+            
+            document.getElementById('fetchedPatronInfo').value = `${transaction.patronName} (${transaction.patronId})`;
+            document.getElementById('bookResultPanel').classList.add('show');
+            return transaction;
+        } else {
+            const returnedBook = transactions.find(t => t.bookId === rfid && t.returnDate);
+            if (returnedBook) {
+                currentScannedBook = null;
+                document.getElementById('resultBookTitle').textContent = returnedBook.bookTitle;
+                document.getElementById('resultBookId').textContent = `RFID: ${returnedBook.bookId}`;
+                document.getElementById('resultAuthor').textContent = `Author: ${returnedBook.author || 'Unknown'}`;
+                document.getElementById('resultPatronName').textContent = 'Already Returned';
+                document.getElementById('resultPatronId').textContent = `Returned on: ${returnedBook.returnDate}`;
+                document.getElementById('resultDueDate').textContent = 'Completed';
+                document.getElementById('resultFine').textContent = 'Status: Returned';
+                document.getElementById('fetchedPatronInfo').value = 'Book already returned';
+                document.getElementById('bookResultPanel').classList.add('show');
+                showToast(`📖 "${returnedBook.bookTitle}" was already returned`, false);
+            } else {
+                currentScannedBook = null;
+                document.getElementById('bookResultPanel').classList.remove('show');
+                document.getElementById('fetchedPatronInfo').value = '';
+                showToast(`No active loan found for RFID: ${rfid}`, true);
+            }
+            return null;
+        }
+    }
+
+    function calculateFine(dueDate, returnDate = null) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(dueDate);
+        due.setHours(0, 0, 0, 0);
+        const endDate = returnDate ? new Date(returnDate) : today;
+        
+        if (endDate <= due) return 0;
+        const daysOverdue = Math.ceil((endDate - due) / (1000 * 60 * 60 * 24));
+        return daysOverdue * 0.50;
+    }
+
+    function processCheckout() {
+        if (!currentPatron) {
+            const patronId = document.getElementById('checkoutPatronInput').value.trim();
+            if (!patronId) {
+                showToast("Please scan Patron RFID first", true);
+                return;
+            }
+            if (!setPatronSession(patronId)) return;
+        }
+        
+        const bookId = document.getElementById('checkoutBookInput').value.trim();
+        if (!bookId) {
+            showToast("Please scan Book RFID", true);
+            return;
+        }
+        
+        const existingLoan = transactions.find(t => t.bookId === bookId && !t.returnDate);
+        if (existingLoan) {
+            showToast(`❌ Book "${existingLoan.bookTitle}" is already checked out`, true);
+            return;
+        }
+        
+        const bookInfo = bookDB[bookId];
+        if (!bookInfo) {
+            showToast(`❌ Book not found: ${bookId}`, true);
+            return;
+        }
+        
+        const today = new Date();
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 14);
+        
+        const newTransaction = {
+            id: `TR${Date.now()}`,
+            bookId: bookId,
+            bookTitle: bookInfo.title,
+            author: bookInfo.author,
+            patronId: currentPatron.id,
+            patronName: currentPatron.name,
+            patronEmail: currentPatron.email,
+            checkoutDate: today.toISOString().split('T')[0],
+            dueDate: dueDate.toISOString().split('T')[0],
+            returnDate: null,
+            renewedCount: 0,
+            maxRenewals: 1,
+            status: "borrowed",
+            finePerDay: 0.50,
+            finePaid: false
+        };
+        
+        transactions.unshift(newTransaction);
+        showToast(`✅ Checked out "${bookInfo.title}" to ${currentPatron.name}. Due: ${newTransaction.dueDate}`);
+        
+        document.getElementById('checkoutBookInput').value = '';
+        renderTransactions();
+        updateStats();
+    }
+
+    function processReturn() {
+        if (!currentScannedBook) {
+            showToast("Please scan a book RFID first", true);
+            return;
+        }
+        
+        const fine = calculateFine(currentScannedBook.dueDate);
+        currentScannedBook.returnDate = new Date().toISOString().split('T')[0];
+        currentScannedBook.status = "returned";
+        
+        let message = `📎 Returned "${currentScannedBook.bookTitle}" from ${currentScannedBook.patronName}`;
+        if (fine > 0) {
+            message += `. Fine applied: $${fine.toFixed(2)}`;
+        }
+        
+        showToast(message);
+        document.getElementById('scanBookRfid').value = '';
+        document.getElementById('fetchedPatronInfo').value = '';
+        document.getElementById('bookResultPanel').classList.remove('show');
+        currentScannedBook = null;
+        renderTransactions();
+        updateStats();
+    }
+
+    function processRenew() {
+        if (!currentScannedBook) {
+            showToast("Please scan a book RFID first", true);
+            return;
+        }
+        
+        if (currentScannedBook.renewedCount >= currentScannedBook.maxRenewals) {
+            showToast(`❌ Maximum ${currentScannedBook.maxRenewals} renewal(s) already used`, true);
+            return;
+        }
+        
+        const newDueDate = new Date(currentScannedBook.dueDate);
+        newDueDate.setDate(newDueDate.getDate() + 7);
+        currentScannedBook.dueDate = newDueDate.toISOString().split('T')[0];
+        currentScannedBook.renewedCount++;
+        currentScannedBook.status = "renewed";
+        
+        showToast(`🔄 Renewed "${currentScannedBook.bookTitle}" until ${currentScannedBook.dueDate}`);
+        document.getElementById('scanBookRfid').value = '';
+        document.getElementById('fetchedPatronInfo').value = '';
+        document.getElementById('bookResultPanel').classList.remove('show');
+        currentScannedBook = null;
+        renderTransactions();
+        updateStats();
+    }
+
+    function updateStatus(transaction) {
+        if (transaction.returnDate) {
+            transaction.status = "returned";
+            return;
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(transaction.dueDate);
+        due.setHours(0, 0, 0, 0);
+        
+        if (due < today) {
+            transaction.status = "overdue";
+        } else if (transaction.renewedCount > 0) {
+            transaction.status = "renewed";
+        } else {
+            transaction.status = "borrowed";
+        }
+    }
+
+    function renderTransactions() {
+        const tbody = document.getElementById('transactionsBody');
+        let filtered = [...transactions];
+        
+        if (currentFilter === 'active') {
+            filtered = filtered.filter(t => !t.returnDate);
+        } else if (currentFilter === 'overdue') {
+            filtered = filtered.filter(t => {
+                if (t.returnDate) return false;
+                const due = new Date(t.dueDate);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                return due < today;
+            });
+        } else if (currentFilter === 'returned') {
+            filtered = filtered.filter(t => t.returnDate);
+        }
+        
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No transactions found</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = filtered.map(trans => {
+            updateStatus(trans);
+            const fine = calculateFine(trans.dueDate, trans.returnDate);
+            const statusClass = `status-badge status-${trans.status}`;
+            const statusText = {
+                'borrowed': '📗 Borrowed',
+                'overdue': '⚠️ Overdue',
+                'renewed': '🔄 Renewed',
+                'returned': '✓ Returned'
+            }[trans.status] || trans.status;
+            
+            const canRenew = !trans.returnDate && trans.renewedCount < trans.maxRenewals;
+            
+            return `
+                <tr>
+                    <td><strong>${escapeHtml(trans.bookTitle)}</strong><br><small>${trans.bookId}</small></td>
+                    <td><strong>${escapeHtml(trans.patronName)}</strong><br><small>${trans.patronId}</small></td>
+                    <td>${trans.checkoutDate}</td>
+                    <td>${trans.dueDate} ${trans.status === 'overdue' ? '⚠️' : ''}</td>
+                    <td class="${fine > 0 ? 'fine-amount positive' : ''}">${fine > 0 ? `$${fine.toFixed(2)}` : '-'}</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td>
+                        ${!trans.returnDate ? `
+                            <button class="btn-icon btn-renew" onclick="renewFromTable('${trans.id}')" ${!canRenew ? 'disabled' : ''}>⟳ Renew</button>
+                            <button class="btn-icon btn-return" onclick="returnFromTable('${trans.bookId}')">📎 Return</button>
+                        ` : '<span style="color:#6b7280;">Completed</span>'}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    window.renewFromTable = function(id) {
+        const transaction = transactions.find(t => t.id === id);
+        if (!transaction || transaction.returnDate) return;
+        if (transaction.renewedCount >= transaction.maxRenewals) {
+            showToast("Maximum renewals reached", true);
+            return;
+        }
+        const newDueDate = new Date(transaction.dueDate);
+        newDueDate.setDate(newDueDate.getDate() + 7);
+        transaction.dueDate = newDueDate.toISOString().split('T')[0];
+        transaction.renewedCount++;
+        transaction.status = "renewed";
+        showToast(`Renewed until ${transaction.dueDate}`);
+        renderTransactions();
+        updateStats();
+    };
+
+    window.returnFromTable = function(bookId) {
+        const transaction = transactions.find(t => t.bookId === bookId && !t.returnDate);
+        if (transaction) {
+            transaction.returnDate = new Date().toISOString().split('T')[0];
+            showToast(`Returned: ${transaction.bookTitle}`);
+            renderTransactions();
+            updateStats();
+        }
+    };
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+        });
+    }
+
+    function updateStats() {
+        const activeLoans = transactions.filter(t => !t.returnDate).length;
+        const overdue = transactions.filter(t => {
+            if (t.returnDate) return false;
+            const due = new Date(t.dueDate);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            return due < today;
+        }).length;
+        const totalFine = transactions.reduce((sum, t) => sum + calculateFine(t.dueDate, t.returnDate), 0);
+        
+        document.getElementById('activeLoansCount').textContent = activeLoans;
+        document.getElementById('overdueCount').textContent = overdue;
+        document.getElementById('totalFineAmount').textContent = `$${totalFine.toFixed(2)}`;
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.getAttribute('data-mode') === mode) tab.classList.add('active');
+        });
+        
+        document.getElementById('checkoutMode').style.display = mode === 'checkout' ? 'block' : 'none';
+        document.getElementById('returnMode').style.display = mode === 'return' ? 'block' : 'none';
+        
+        if (mode === 'checkout' && !currentPatron) {
+            document.getElementById('checkoutPatronInput').focus();
+        }
+        if (mode === 'return') {
+            document.getElementById('scanBookRfid').focus();
+        }
+    }
+
+    function filterTransactions(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-filter') === filter) btn.classList.add('active');
+        });
+        renderTransactions();
+    }
+
+    // Event Listeners
+    document.getElementById('checkoutPatronInput').addEventListener('change', function() {
+        if (this.value.trim()) {
+            setPatronSession(this.value.trim());
+            this.value = '';
+            document.getElementById('checkoutBookInput').focus();
+        }
+    });
+
+    document.getElementById('scanBookRfid').addEventListener('change', function() {
+        if (this.value.trim()) {
+            findBookByRfid(this.value.trim());
+            this.value = '';
+        }
+    });
+
+    // Make functions global
+    window.setMode = setMode;
+    window.filterTransactions = filterTransactions;
+    window.processCheckout = processCheckout;
+    window.processReturn = processReturn;
+    window.processRenew = processRenew;
+    window.clearPatronSession = clearPatronSession;
+
+    // Initialize
+    renderTransactions();
+    updateStats();
+    setInterval(() => {
+        renderTransactions();
+        updateStats();
+    }, 60000);
+</script>
+
+</body>
+</html>
