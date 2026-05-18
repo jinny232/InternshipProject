@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFID LIB | Patron</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #93c5fd;
+            --primary-bg: #eff6ff;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fed7aa;
+            --info: #0ea5e9;
+            --info-light: #e0f2fe;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--white);
+            min-height: 100vh;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            color: var(--gray-600);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--primary-bg);
+            color: var(--primary);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: var(--danger-light);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Login Card */
+        .login-card {
+            max-width: 450px;
+            margin: 3rem auto;
+            background: var(--white);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h2 {
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-outline {
+            background: var(--gray-100);
+            color: var(--gray-800);
+            border: 1px solid var(--gray-200);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-200);
+        }
+
+        /* Stats Cards - Light Blue */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--primary-bg);
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--primary-light);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-card h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        /* Search Section - Light Blue */
+        .search-section, .borrowed-section {
+            background: var(--primary-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--primary-light);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-800);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+        }
+
+        .category-filter {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .category-chip {
+            padding: 0.35rem 1rem;
+            border-radius: 2rem;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .category-chip.active, .category-chip:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Books Grid */
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .book-card {
+            background: var(--white);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s;
+            border: 1px solid var(--gray-200);
+        }
+
+        .book-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .book-cover {
+            height: 160px;
+            background: linear-gradient(135deg, var(--primary-bg), var(--white));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .book-info {
+            padding: 1rem;
+        }
+
+        .book-title {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--gray-800);
+        }
+
+        .book-author {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+
+        .book-status {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .status-available { background: var(--success-light); color: #065f46; }
+        .status-borrowed { background: var(--warning-light); color: #9a3412; }
+        .status-reserved { background: var(--info-light); color: #0369a1; }
+
+        .book-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .book-actions button {
+            flex: 1;
+            padding: 0.4rem;
+            font-size: 0.7rem;
+            border-radius: 0.5rem;
+        }
+
+        /* Table Styles */
+        .borrowed-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .borrowed-table th, .borrowed-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .borrowed-table th {
+            background: var(--white);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--gray-600);
+        }
+
+        .status-overdue {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .reservation-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            background: var(--info-light);
+            color: #0369a1;
+        }
+
+        /* Review Card */
+        .review-card {
+            background: var(--white);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--gray-200);
+            transition: all 0.2s;
+        }
+
+        .review-card:hover {
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .rating {
+            display: flex;
+            gap: 0.25rem;
+            margin: 1rem 0;
+        }
+
+        .star {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-300);
+            transition: all 0.2s;
+        }
+
+        .star.active, .star:hover {
+            color: #fbbf24;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--gray-800);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+            z-index: 1100;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        hr {
+            margin: 1rem 0;
+            border-color: var(--gray-200);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Login Section -->
+        <div id="loginSection" class="container">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="logo" style="font-size: 2rem; margin-bottom: 1rem;">📚</div>
+                    <h2>RFID LIB</h2>
+                    <p style="color: var(--gray-600);">Sign in to access your library account</p>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Patron ID / Email</label>
+                        <input type="text" id="loginId" placeholder="Enter your Patron ID or Email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Login →</button>
+                </form>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="#" onclick="showRegister()" style="color: var(--primary); text-decoration: none;">Don't have an account? Register as Patron</a>
+                </div>
+                <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-200);">
+                    <p style="font-size: 0.75rem; color: var(--gray-600);">Demo: PAT-1001 / password123</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Section -->
+        <div id="registerSection" class="container hidden">
+            <div class="login-card">
+                <div class="login-header">
+                    <h2>Register as New Patron</h2>
+                    <p style="color: var(--gray-600);">Create your library account</p>
+                </div>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="regName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="regEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="regPhone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="regConfirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Register →</button>
+                </form>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="#" onclick="showLogin()" style="color: var(--primary); text-decoration: none;">← Back to Login</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboardSection" class="hidden">
+            <nav class="navbar">
+                <div class="logo">📚 Library </div>
+                <div class="nav-links">
+                    <a class="nav-link active" onclick="showPage('catalog')">📖 Catalog</a>
+                    <a class="nav-link" onclick="showPage('borrowed')">📚 My Borrowings</a>
+                    <a class="nav-link" onclick="showPage('reservations')">⏰ Reservations</a>
+                    <a class="nav-link" onclick="showPage('reviews')">⭐ My Reviews</a>
+                    <a class="nav-link" onclick="showPage('profile')">👤 Profile</a>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <span id="userName" style="color: var(--gray-800); font-weight: 500;">Loading...</span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </nav>
+
+            <div class="container">
+                <div class="stats-grid" id="statsGrid"></div>
+
+                <!-- Catalog Page -->
+                <div id="catalogPage">
+                    <div class="search-section">
+                        <div class="search-bar">
+                            <input type="text" id="searchInput" placeholder="Search by title, author, or ISBN..." onkeyup="searchBooks()">
+                            <button class="btn btn-primary" onclick="searchBooks()">🔍 Search</button>
+                        </div>
+                        <div class="category-filter" id="categoryFilter"></div>
+                    </div>
+                    <div class="books-grid" id="booksGrid"></div>
+                </div>
+
+                <!-- Borrowed Page -->
+                <div id="borrowedPage" class="hidden">
+                    <div class="borrowed-section">
+                        <div class="section-title">📚 Currently Borrowed Books</div>
+                        <div style="overflow-x: auto;">
+                            <table class="borrowed-table">
+                                <thead><tr><th>Book Title</th><th>Borrowed Date</th><th>Due Date</th><th>Status</th><th>Fine</th><th>Action</th></tr></thead>
+                                <tbody id="borrowedBody"></tbody>
+                            </table>
+                        </div>
+                    </div>Title
+                    <div class="borrowed-section" style="margin-top: 1rem;">
+                        <div class="section-title">📜  History</div>
+                        <div style="overflow-x: auto;">
+                            <table class="borrowed-table">
+                                <thead><tr><th>Book Title</th><th>Borrowed Date</th><th>Returned Date</th><th>Status</th></tr></thead>
+                                <tbody id="historyBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reservations Page -->
+                <div id="reservationsPage" class="hidden">
+                    <div class="borrowed-section">
+                        <div class="section-title">⏰ My Reservations</div>
+                        <div style="overflow-x: auto;">
+                            <table class="borrowed-table">
+                                <thead><tr><th>Book Title</th><th>Author</th><th>Reserved On</th><th>Status</th><th>Position</th><th>Action</th></tr></thead>
+                                <tbody id="reservationsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Page -->
+                <div id="reviewsPage" class="hidden">
+                    <div class="borrowed-section">
+                        <div class="section-title">⭐ My Book Reviews</div>
+                        <div id="reviewsList"></div>
+                    </div>
+                </div>
+
+                <!-- Profile Page -->
+                <div id="profilePage" class="hidden">
+                    <div class="borrowed-section">
+                        <div class="section-title">👤 My Profile</div>
+                        <form id="profileForm">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" id="profileName" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" id="profileEmail" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" id="profilePhone" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Member Since</label>
+                                <input type="text" id="profileJoinDate" readonly>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bookModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalBookTitle">Book Details</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        
+        // Fake Data - Books Catalog
+        let books = [
+            { id: "BK001", title: "Data Structures & Algorithms", author: "Thomas Cormen", category: "Computer Science", isbn: "978-0262033848", status: "available", copies: 3, year: 2022, pages: 1312, description: "The classic text on algorithms and data structures." },
+            { id: "BK002", title: "The Pragmatic Programmer", author: "David Thomas", category: "Programming", isbn: "978-0201616224", status: "borrowed", copies: 2, year: 2019, pages: 352, description: "Your journey to mastery. Tips for practical software development." },
+            { id: "BK003", title: "Clean Code", author: "Robert Martin", category: "Programming", isbn: "978-0132350884", status: "available", copies: 4, year: 2020, pages: 464, description: "Learn to write clean, maintainable code." },
+            { id: "BK004", title: "Artificial Intelligence: A Modern Approach", author: "Stuart Russell", category: "AI", isbn: "978-0136042594", status: "available", copies: 2, year: 2021, pages: 1152, description: "Comprehensive AI textbook." },
+            { id: "BK005", title: "Design Patterns", author: "Erich Gamma", category: "Programming", isbn: "978-0201633610", status: "reserved", copies: 1, year: 2018, pages: 416, description: "Reusable object-oriented software." },
+            { id: "BK006", title: "Introduction to Algorithms", author: "Cormen & Co", category: "Computer Science", isbn: "978-0262033848", status: "available", copies: 5, year: 2022, pages: 1312, description: "Leading algorithms textbook." },
+            { id: "BK007", title: "Database System Concepts", author: "Silberschatz", category: "Database", isbn: "978-0073523323", status: "borrowed", copies: 3, year: 2020, pages: 1376, description: "Clear database concepts with examples." },
+            { id: "BK008", title: "The Mythical Man-Month", author: "Fred Brooks", category: "Software Engineering", isbn: "978-0201835953", status: "available", copies: 2, year: 2019, pages: 336, description: "Software engineering essays." },
+            { id: "BK009", title: "You Don't Know JS", author: "Kyle Simpson", category: "Web Dev", isbn: "978-1491924464", status: "available", copies: 4, year: 2021, pages: 624, description: "Deep dive into JavaScript." },
+            { id: "BK010", title: "Python Crash Course", author: "Eric Matthes", category: "Programming", isbn: "978-1593279288", status: "borrowed", copies: 2, year: 2022, pages: 544, description: "Hands-on Python introduction." },
+            { id: "BK011", title: "Deep Learning", author: "Ian Goodfellow", category: "AI", isbn: "978-0262035613", status: "available", copies: 1, year: 2020, pages: 800, description: "Deep learning textbook." },
+            { id: "BK012", title: "The Clean Coder", author: "Robert Martin", category: "Programming", isbn: "978-0137081073", status: "available", copies: 2, year: 2021, pages: 256, description: "Professional practices for developers." }
+        ];
+
+        let patrons = [
+            { id: "PAT-1001", name: "Alice ", email: "alice@library.com", phone: "+1 (555) 123-4567", password: "password123", joinDate: "2025-01-15" }
+        ];
+
+        // Fake Data - Transactions
+        let transactions = [
+            { id: "TR001", bookId: "BK002", bookTitle: "The Pragmatic Programmer", patronId: "PAT-1001", patronName: "Alice Henderson", checkoutDate: "2026-04-25", dueDate: "2026-05-09", returnDate: null, renewed: false, finePaid: false },
+            { id: "TR002", bookId: "BK007", bookTitle: "Database System Concepts", patronId: "PAT-1001", patronName: "Alice Henderson", checkoutDate: "2026-05-01", dueDate: "2026-05-15", returnDate: null, renewed: false, finePaid: false },
+            { id: "TR003", bookId: "BK010", bookTitle: "Python Crash Course", patronId: "PAT-1001", patronName: "Alice Henderson", checkoutDate: "2026-05-05", dueDate: "2026-05-19", returnDate: null, renewed: true, finePaid: false },
+            { id: "TR100", bookId: "BK001", bookTitle: "Data Structures & Algorithms", patronId: "PAT-1001", patronName: "Alice Henderson", checkoutDate: "2026-01-10", dueDate: "2026-01-24", returnDate: "2026-01-22", renewed: false, finePaid: true },
+            { id: "TR101", bookId: "BK004", bookTitle: "Artificial Intelligence", patronId: "PAT-1001", patronName: "Alice Henderson", checkoutDate: "2026-02-01", dueDate: "2026-02-15", returnDate: "2026-02-14", renewed: false, finePaid: true },
+            { id: "TR102", bookId: "BK006", bookTitle: "Introduction to Algorithms", patronId: "PAT-1001", patronName: "Alice Henderson", checkoutDate: "2026-02-20", dueDate: "2026-03-06", returnDate: "2026-03-10", renewed: false, finePaid: true }
+        ];
+
+        // Fake Data - Reservations
+        let reservations = [
+            { id: "RES001", bookId: "BK005", bookTitle: "Design Patterns", author: "Erich Gamma", patronId: "PAT-1001", patronName: "Alice Henderson", reservedDate: "2026-05-01", status: "pending", position: 1, queueLength: 2 },
+            { id: "RES002", bookId: "BK002", bookTitle: "The Pragmatic Programmer", author: "David Thomas", patronId: "PAT-1001", patronName: "Alice Henderson", reservedDate: "2026-05-05", status: "pending", position: 2, queueLength: 3 }
+        ];
+
+        // Fake Data - Reviews
+        let reviews = [
+            { id: "REV001", bookId: "BK001", bookTitle: "Data Structures & Algorithms", patronId: "PAT-1001", patronName: "Alice Henderson", rating: 5, comment: "Excellent book! Very comprehensive coverage of algorithms. Highly recommend!", date: "2026-01-25", helpful: 24 },
+            { id: "REV002", bookId: "BK004", bookTitle: "Artificial Intelligence", patronId: "PAT-1001", patronName: "Alice Henderson", rating: 4, comment: "Great textbook for AI fundamentals. Covers everything from search to neural networks.", date: "2026-02-18", helpful: 18 },
+            { id: "REV003", bookId: "BK006", bookTitle: "Introduction to Algorithms", patronId: "PAT-1001", patronName: "Alice Henderson", rating: 5, comment: "The bible of algorithms! A must-have for computer science students.", date: "2026-03-12", helpful: 32 }
+        ];
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function showLogin() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('registerSection').classList.add('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('registerSection').classList.remove('hidden');
+        }
+
+        document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('loginId').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const patron = patrons.find(p => (p.id === id || p.email === id) && p.password === password);
+            if (patron) {
+                currentUser = patron;
+                document.getElementById('dashboardSection').classList.remove('hidden');
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('userName').textContent = currentUser.name;
+                document.getElementById('userAvatar').textContent = currentUser.name.charAt(0);
+                loadUserData();
+                showToast(`Welcome back, ${currentUser.name}!`);
+            } else {
+                showToast("Invalid credentials. Try PAT-1001 / password123", true);
+            }
+        });
+
+        document.getElementById('registerForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const phone = document.getElementById('regPhone').value;
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirmPassword').value;
+            
+            if (password !== confirm) {
+                showToast("Passwords do not match", true);
+                return;
+            }
+            
+            const newPatron = {
+                id: `PAT-${Date.now()}`,
+                name, email, phone, password,
+                joinDate: new Date().toISOString().split('T')[0]
+            };
+            patrons.push(newPatron);
+            showToast("Registration successful! Please login.", false);
+            showLogin();
+        });
+
+        function loadUserData() {
+            updateStats();
+            renderBooks();
+            renderBorrowedBooks();
+            renderHistory();
+            renderReservations();
+            renderReviews();
+            renderProfile();
+            setupCategoryFilter();
+        }
+
+        function updateStats() {
+            const userTransactions = transactions.filter(t => t.patronId === currentUser.id);
+            const activeLoans = userTransactions.filter(t => !t.returnDate).length;
+            const overdue = userTransactions.filter(t => !t.returnDate && new Date(t.dueDate) < new Date()).length;
+            const userReviews = reviews.filter(r => r.patronId === currentUser.id).length;
+            const userReservations = reservations.filter(r => r.patronId === currentUser.id).length;
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card"><h4>Books Borrowed</h4><div class="number">${activeLoans}</div></div>
+                <div class="stat-card"><h4>Overdue Books</h4><div class="number" style="color:#ef4444;">${overdue}</div></div>
+                <div class="stat-card"><h4>Books Read</h4><div class="number">${userTransactions.filter(t => t.returnDate).length}</div></div>
+                <div class="stat-card"><h4>Reviews Written</h4><div class="number">${userReviews}</div></div>
+                <div class="stat-card"><h4>Reservations</h4><div class="number">${userReservations}</div></div>
+            `;
+        }
+
+        function calculateFine(dueDate, returnDate = null) {
+            const due = new Date(dueDate);
+            const today = new Date();
+            if (returnDate) {
+                const ret = new Date(returnDate);
+                if (ret <= due) return 0;
+                const days = Math.ceil((ret - due) / (1000*60*60*24));
+                return days * 0.50;
+            }
+            if (today <= due) return 0;
+            const days = Math.ceil((today - due) / (1000*60*60*24));
+            return days * 0.50;
+        }
+
+        function renderBooks() {
+            const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+            const activeCategory = document.querySelector('.category-chip.active')?.dataset.category || '';
+            
+            let filtered = books.filter(book => 
+                book.title.toLowerCase().includes(searchTerm) || 
+                book.author.toLowerCase().includes(searchTerm)
+            );
+            if (activeCategory) filtered = filtered.filter(book => book.category === activeCategory);
+            
+            const grid = document.getElementById('booksGrid');
+            grid.innerHTML = filtered.map(book => `
+                <div class="book-card">
+                    <div class="book-cover">📖</div>
+                    <div class="book-info">
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-author">${book.author} (${book.year})</div>
+                        <span class="book-status status-${book.status}">${book.status.toUpperCase()}</span>
+                        <div class="book-actions">
+                            <button class="btn btn-outline" onclick="viewBookDetails('${book.id}')">Details</button>
+                            ${book.status === 'available' ? `<button class="btn btn-success" onclick="borrowBook('${book.id}')">Borrow</button>` : ''}
+                            ${book.status === 'borrowed' ? `<button class="btn btn-warning" onclick="reserveBook('${book.id}')">Reserve</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupCategoryFilter() {
+            const categories = [...new Set(books.map(b => b.category))];
+            const filterDiv = document.getElementById('categoryFilter');
+            filterDiv.innerHTML = `<div class="category-chip active" data-category="" onclick="filterByCategory('')">All (${books.length})</div>` +
+                categories.map(cat => `<div class="category-chip" data-category="${cat}" onclick="filterByCategory('${cat}')">${cat} (${books.filter(b => b.category === cat).length})</div>`).join('');
+        }
+
+        window.filterByCategory = function(category) {
+            document.querySelectorAll('.category-chip').forEach(chip => chip.classList.remove('active'));
+            event.target.classList.add('active');
+            renderBooks();
+        };
+
+        window.searchBooks = function() { renderBooks(); };
+
+        window.viewBookDetails = function(bookId) {
+            const book = books.find(b => b.id === bookId);
+            const modal = document.getElementById('bookModal');
+            document.getElementById('modalBookTitle').textContent = book.title;
+            document.getElementById('modalBody').innerHTML = `
+                <p><strong>Author:</strong> ${book.author}</p>
+                <p><strong>ISBN:</strong> ${book.isbn}</p>
+                <p><strong>Category:</strong> ${book.category}</p>
+                <p><strong>Year:</strong> ${book.year}</p>
+                <p><strong>Pages:</strong> ${book.pages}</p>
+                <p><strong>Status:</strong> <span class="book-status status-${book.status}">${book.status}</span></p>
+                <p><strong>Copies Available:</strong> ${book.copies}</p>
+                <hr>
+                <p>${book.description}</p>
+                <hr>
+                <h4>Write a Review</h4>
+                <div class="rating" id="ratingStars">
+                    ${[1,2,3,4,5].map(i => `<span class="star" onclick="setRating(${i})">★</span>`).join('')}
+                </div>
+                <textarea id="reviewText" rows="3" placeholder="Share your thoughts..." style="width:100%; padding:0.5rem; border-radius:0.5rem; border:1px solid #ddd;"></textarea>
+                <button class="btn btn-primary" style="margin-top:1rem; width:100%;" onclick="submitReview('${bookId}')">Submit Review</button>
+            `;
+            modal.classList.add('active');
+        };
+
+        let currentRating = 0;
+        window.setRating = function(rating) {
+            currentRating = rating;
+            document.querySelectorAll('#ratingStars .star').forEach((star, i) => {
+                star.classList.toggle('active', i < rating);
+            });
+        };
+
+        window.submitReview = function(bookId) {
+            const reviewText = document.getElementById('reviewText').value;
+            if (!reviewText) {
+                showToast("Please write a review", true);
+                return;
+            }
+            const book = books.find(b => b.id === bookId);
+            reviews.unshift({
+                id: `REV${Date.now()}`,
+                bookId, bookTitle: book.title,
+                patronId: currentUser.id, patronName: currentUser.name,
+                rating: currentRating, comment: reviewText,
+                date: new Date().toISOString().split('T')[0],
+                helpful: 0
+            });
+            showToast("Review submitted!");
+            closeModal();
+            renderReviews();
+            updateStats();
+        };
+
+        window.borrowBook = function(bookId) {
+            const book = books.find(b => b.id === bookId);
+            if (book.status !== 'available') {
+                showToast("Book not available", true);
+                return;
+            }
+            
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 14);
+            
+            transactions.push({
+                id: `TR${Date.now()}`,
+                bookId, bookTitle: book.title,
+                patronId: currentUser.id, patronName: currentUser.name,
+                checkoutDate: new Date().toISOString().split('T')[0],
+                dueDate: dueDate.toISOString().split('T')[0],
+                returnDate: null, renewed: false, finePaid: false
+            });
+            
+            book.status = 'borrowed';
+            showToast(`✓ Borrowed "${book.title}". Due: ${dueDate.toISOString().split('T')[0]}`);
+            renderBooks();
+            loadUserData();
+        };
+
+        window.returnBook = function(transactionId) {
+            const transaction = transactions.find(t => t.id === transactionId);
+            if (!transaction) return;
+            
+            const fine = calculateFine(transaction.dueDate);
+            transaction.returnDate = new Date().toISOString().split('T')[0];
+            const book = books.find(b => b.id === transaction.bookId);
+            if (book) book.status = 'available';
+            
+            if (fine > 0) showToast(`Returned! Fine: $${fine.toFixed(2)}`);
+            else showToast(`✓ "${transaction.bookTitle}" returned`);
+            
+            loadUserData();
+        };
+
+        window.renewBook = function(transactionId) {
+            const transaction = transactions.find(t => t.id === transactionId);
+            if (!transaction || transaction.returnDate) {
+                showToast("Cannot renew", true);
+                return;
+            }
+            if (transaction.renewed) {
+                showToast("Max renewals reached", true);
+                return;
+            }
+            
+            const newDue = new Date(transaction.dueDate);
+            newDue.setDate(newDue.getDate() + 7);
+            transaction.dueDate = newDue.toISOString().split('T')[0];
+            transaction.renewed = true;
+            showToast(`✓ Renewed until ${transaction.dueDate}`);
+            loadUserData();
+        };
+
+        window.reserveBook = function(bookId) {
+            const book = books.find(b => b.id === bookId);
+            if (reservations.some(r => r.bookId === bookId && r.patronId === currentUser.id)) {
+                showToast("Already reserved", true);
+                return;
+            }
+            
+            reservations.push({
+                id: `RES${Date.now()}`,
+                bookId, bookTitle: book.title, author: book.author,
+                patronId: currentUser.id, patronName: currentUser.name,
+                reservedDate: new Date().toISOString().split('T')[0],
+                status: 'pending', position: 3, queueLength: 3
+            });
+            showToast(`✓ "${book.title}" reserved. You're #3 in queue.`);
+            loadUserData();
+        };
+
+        window.cancelReservation = function(reservationId) {
+            reservations = reservations.filter(r => r.id !== reservationId);
+            showToast("Reservation cancelled");
+            loadUserData();
+        };
+
+        function renderBorrowedBooks() {
+            const active = transactions.filter(t => t.patronId === currentUser.id && !t.returnDate);
+            const tbody = document.getElementById('borrowedBody');
+            if (active.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No active borrowings</td></tr>';
+                return;
+            }
+            tbody.innerHTML = active.map(t => {
+                const fine = calculateFine(t.dueDate);
+                const isOverdue = new Date(t.dueDate) < new Date();
+                return `<tr>
+                    <td><strong>${t.bookTitle}</strong></td>
+                    <td>${t.checkoutDate}</td>
+                    <td class="${isOverdue ? 'status-overdue' : ''}">${t.dueDate}${isOverdue ? ' ⚠️' : ''}</td>
+                    <td>${isOverdue ? 'OVERDUE' : (t.renewed ? 'RENEWED' : 'ACTIVE')}</td>
+                    <td>${fine > 0 ? `$${fine.toFixed(2)}` : '-'}</td>
+                    <td>
+                        <button class="btn btn-outline" style="padding:0.3rem 0.8rem;" onclick="renewBook('${t.id}')" ${t.renewed ? 'disabled' : ''}>⟳ Renew</button>
+                    </td>
+                </table>`;
+            }).join('');
+        }
+
+        function renderHistory() {
+            const history = transactions.filter(t => t.patronId === currentUser.id && t.returnDate);
+            const tbody = document.getElementById('historyBody');
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No borrowing history</td></tr>';
+                return;
+            }
+            tbody.innerHTML = history.map(t => `<tr>
+                <td>${t.bookTitle}</td>
+                <td>${t.checkoutDate}</td>
+                <td>${t.returnDate}</td>
+                <td><span style="color:#10b981;">✓ Returned</span></td>
+            </tr>`).join('');
+        }
+
+        function renderReservations() {
+            const userReservations = reservations.filter(r => r.patronId === currentUser.id);
+            const tbody = document.getElementById('reservationsBody');
+            if (userReservations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No active reservations</td><tr>';
+                return;
+            }
+            tbody.innerHTML = userReservations.map(r => `<tr>
+                <td><strong>${r.bookTitle}</strong></td>
+                <td>${r.author}</td>
+                <td>${r.reservedDate}</td>
+                <td><span class="reservation-badge">${r.status === 'pending' ? '⏳ Pending' : '✅ Ready'}</span></td>
+                <td>#${r.position} of ${r.queueLength}</td>
+                <td><button class="btn btn-outline" style="padding:0.3rem 0.8rem;" onclick="cancelReservation('${r.id}')">Cancel</button></td>
+            </tr>`).join('');
+        }
+
+        function renderReviews() {
+            const userReviews = reviews.filter(r => r.patronId === currentUser.id);
+            const container = document.getElementById('reviewsList');
+            if (userReviews.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:2rem;">No reviews yet</div>';
+                return;
+            }
+            container.innerHTML = userReviews.map(r => `
+                <div class="review-card">
+                    <div><strong>${r.bookTitle}</strong> - ${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+                    <div style="font-size:0.75rem; color:var(--gray-600);">${r.date} • ${r.helpful} found helpful</div>
+                    <p style="margin-top:0.5rem;">${r.comment}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderProfile() {
+            document.getElementById('profileName').value = currentUser.name;
+            document.getElementById('profileEmail').value = currentUser.email;
+            document.getElementById('profilePhone').value = currentUser.phone || '';
+            document.getElementById('profileJoinDate').value = currentUser.joinDate;
+        }
+
+        function showPage(page) {
+            document.getElementById('catalogPage').classList.add('hidden');
+            document.getElementById('borrowedPage').classList.add('hidden');
+            document.getElementById('reservationsPage').classList.add('hidden');
+            document.getElementById('reviewsPage').classList.add('hidden');
+            document.getElementById('profilePage').classList.add('hidden');
+            
+            document.getElementById(`${page}Page`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+            
+            if (page === 'catalog') renderBooks();
+        }
+
+        function closeModal() {
+            document.getElementById('bookModal').classList.remove('active');
+            currentRating = 0;
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+            showToast("Logged out");
+        }
+
+        window.showPage = showPage;
+        window.closeModal = closeModal;
+        window.logout = logout;
+        window.showLogin = showLogin;
+        window.showRegister = showRegister;
+    </script>
+</body>
+</html>
