@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Category Management Hub</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --card: #ffffff;
+            --danger: #ef4444;
+            --success: #10b981;
+            --edit-bg: #eff6ff;
+            --active-bg: #dcfce7;
+            --active-text: #15803d;
+            --hidden-bg: #f1f5f9;
+            --hidden-text: #475569;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; }
+
+        /* Header & Tabs */
+        .header-section { 
+            display: flex; justify-content: space-between; align-items: flex-end; 
+            margin-bottom: 2rem; border-bottom: 2px solid var(--border); padding-bottom: 1rem; 
+        }
+
+        .tab-bar { display: flex; gap: 8px; }
+        .tab { 
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; 
+            font-weight: 700; font-size: 0.85rem; background: #e2e8f0; 
+            color: #64748b; border: none; transition: 0.2s;
+        }
+        .tab.active { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
+
+        .btn-create-trigger { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+        /* Grid */
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+
+        .category-card {
+            background: var(--card); padding: 1.5rem; border-radius: 12px;
+            border: 1px solid var(--border); display: flex; flex-direction: column;
+            transition: all 0.2s; position: relative;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            position: absolute; top: 1.5rem; right: 1.5rem;
+            padding: 4px 10px; border-radius: 20px; font-size: 0.7rem;
+            font-weight: 800; text-transform: uppercase;
+        }
+        .status-active { background: var(--active-bg); color: var(--active-text); }
+        .status-hidden { background: var(--hidden-bg); color: var(--hidden-text); }
+
+        .category-name { font-weight: 700; font-size: 1.2rem; color: var(--primary); margin-bottom: 4px; padding: 2px 4px; border-radius: 4px; max-width: 65%; }
+        .category-desc { font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem; min-height: 45px; padding: 2px 4px; border-radius: 4px; line-height: 1.4; }
+        
+        /* Edit Mode Styles */
+        .is-editing .editable { background: var(--edit-bg); border: 1px dashed var(--primary); outline: none; }
+        .is-editing .btn-edit-toggle { background: var(--success) !important; color: white !important; }
+
+        .category-actions { display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 1rem; margin-top: auto; }
+        
+        .btn { padding: 8px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 0.75rem; transition: 0.2s; }
+        .btn-edit-toggle { background: #f1f5f9; color: var(--text); }
+        .btn-hide { background: #fff7ed; color: #c2410c; }
+        .btn-restore { background: var(--success); color: white; display: none; }
+        .btn-purge { background: #fff1f2; color: var(--danger); margin-left: auto; }
+
+        /* Hidden State UI */
+        .category-card.is-hidden { opacity: 0.6; border-style: dashed; }
+        .category-card.is-hidden .btn-hide { display: none; }
+        .category-card.is-hidden .btn-restore { display: inline-block; }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); display: none; align-items: center; justify-content: center;
+            z-index: 1000; backdrop-filter: blur(4px);
+        }
+        .modal-content { background: white; padding: 2rem; border-radius: 16px; width: 450px; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 5px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <div>
+            <h1 style="margin-bottom: 15px;">Category Manager</h1>
+            <div class="tab-bar">
+                <button class="tab active" onclick="filterData('all', this)">View All</button>
+                <button class="tab" onclick="filterData('active', this)">View Active</button>
+                <button class="tab" onclick="filterData('hidden', this)">View Hidden</button>
+            </div>
+        </div>
+        <button class="btn-create-trigger" onclick="openModal()">+ Create Category</button>
+    </div>
+
+    <div class="category-grid" id="categoryGrid">
+        
+        <div class="category-card" data-status="active">
+            <span class="status-badge status-active">Active</span>
+            <div class="category-name editable" contenteditable="false">Fiction</div>
+            <div class="category-desc editable" contenteditable="false">Novels, short stories, and creative narratives.</div>
+            <div class="category-actions">
+                <button class="btn btn-edit-toggle" onclick="toggleEdit(this)">Edit Info</button>
+                <button class="btn btn-hide" onclick="changeStatus(this, 'hidden')">Hide</button>
+                <button class="btn btn-restore" onclick="changeStatus(this, 'active')">Restore</button>
+                <button class="btn btn-purge" onclick="purge(this)">Purge</button>
+            </div>
+        </div>
+
+        <div class="category-card" data-status="active">
+            <span class="status-badge status-active">Active</span>
+            <div class="category-name editable" contenteditable="false">Technology</div>
+            <div class="category-desc editable" contenteditable="false">Software engineering, hardware reviews, and AI research.</div>
+            <div class="category-actions">
+                <button class="btn btn-edit-toggle" onclick="toggleEdit(this)">Edit Info</button>
+                <button class="btn btn-hide" onclick="changeStatus(this, 'hidden')">Hide</button>
+                <button class="btn btn-restore" onclick="changeStatus(this, 'active')">Restore</button>
+                <button class="btn btn-purge" onclick="purge(this)">Purge</button>
+            </div>
+        </div>
+
+        <div class="category-card" data-status="active">
+            <span class="status-badge status-active">Active</span>
+            <div class="category-name editable" contenteditable="false">Mystery & Crime</div>
+            <div class="category-desc editable" contenteditable="false">Whodunits, thrillers, and true crime investigations.</div>
+            <div class="category-actions">
+                <button class="btn btn-edit-toggle" onclick="toggleEdit(this)">Edit Info</button>
+                <button class="btn btn-hide" onclick="changeStatus(this, 'hidden')">Hide</button>
+                <button class="btn btn-restore" onclick="changeStatus(this, 'active')">Restore</button>
+                <button class="btn btn-purge" onclick="purge(this)">Purge</button>
+            </div>
+        </div>
+
+        <div class="category-card" data-status="active">
+            <span class="status-badge status-active">Active</span>
+            <div class="category-name editable" contenteditable="false">Historical Archive</div>
+            <div class="category-desc editable" contenteditable="false">Ancient manuscripts and documented historical events.</div>
+            <div class="category-actions">
+                <button class="btn btn-edit-toggle" onclick="toggleEdit(this)">Edit Info</button>
+                <button class="btn btn-hide" onclick="changeStatus(this, 'hidden')">Hide</button>
+                <button class="btn btn-restore" onclick="changeStatus(this, 'active')">Restore</button>
+                <button class="btn btn-purge" onclick="purge(this)">Purge</button>
+            </div>
+        </div>
+
+        <div class="category-card is-hidden" data-status="hidden">
+            <span class="status-badge status-hidden">Hidden</span>
+            <div class="category-name editable" contenteditable="false">Children's Literature</div>
+            <div class="category-desc editable" contenteditable="false">Picture books and early reader stories.</div>
+            <div class="category-actions">
+                <button class="btn btn-edit-toggle" onclick="toggleEdit(this)">Edit Info</button>
+                <button class="btn btn-hide" onclick="changeStatus(this, 'hidden')">Hide</button>
+                <button class="btn btn-restore" onclick="changeStatus(this, 'active')">Restore</button>
+                <button class="btn btn-purge" onclick="purge(this)">Purge</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <h2 style="margin-top:0">Create New Category</h2>
+            <div class="form-group">
+                <label>CATEGORY NAME</label>
+                <input type="text" id="newName">
+            </div>
+            <div class="form-group">
+                <label>DESCRIPTION</label>
+                <textarea id="newDesc" rows="3"></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn" style="flex:1; background:#f1f5f9" onclick="closeModal()">Cancel</button>
+                <button class="btn-create-trigger" style="flex:2" onclick="createCategory()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('modalOverlay');
+        function openModal() { modal.style.display = 'flex'; }
+        function closeModal() { modal.style.display = 'none'; }
+
+        // Filter Logic
+        function filterData(status, btn) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            const cards = document.querySelectorAll('.category-card');
+            cards.forEach(card => {
+                if (status === 'all') card.style.display = 'flex';
+                else card.style.display = (card.getAttribute('data-status') === status) ? 'flex' : 'none';
+            });
+        }
+
+        // Status Logic
+        function changeStatus(btn, newStatus) {
+            const card = btn.closest('.category-card');
+            const badge = card.querySelector('.status-badge');
+            card.setAttribute('data-status', newStatus);
+
+            if (newStatus === 'hidden') {
+                card.classList.add('is-hidden');
+                badge.innerText = "Hidden";
+                badge.className = "status-badge status-hidden";
+            } else {
+                card.classList.remove('is-hidden');
+                badge.innerText = "Active";
+                badge.className = "status-badge status-active";
+            }
+            
+            // Re-apply current filter
+            const activeTab = document.querySelector('.tab.active');
+            filterData(activeTab.innerText.toLowerCase().replace('view ', ''), activeTab);
+        }
+
+        function toggleEdit(btn) {
+            const card = btn.closest('.category-card');
+            const fields = card.querySelectorAll('.editable');
+            const isEditing = card.classList.toggle('is-editing');
+
+            if (isEditing) {
+                btn.innerText = "Save Changes";
+                fields.forEach(f => f.contentEditable = "true");
+                fields[0].focus();
+            } else {
+                btn.innerText = "Edit Info";
+                fields.forEach(f => f.contentEditable = "false");
+            }
+        }
+
+        function createCategory() {
+            const name = document.getElementById('newName').value;
+            const desc = document.getElementById('newDesc').value;
+            if(!name) return alert("Name is required");
+
+            const grid = document.getElementById('categoryGrid');
+            const card = document.createElement('div');
+            card.className = 'category-card';
+            card.setAttribute('data-status', 'active');
+            card.innerHTML = `
+                <span class="status-badge status-active">Active</span>
+                <div class="category-name editable" contenteditable="false">${name}</div>
+                <div class="category-desc editable" contenteditable="false">${desc}</div>
+                <div class="category-actions">
+                    <button class="btn btn-edit-toggle" onclick="toggleEdit(this)">Edit Info</button>
+                    <button class="btn btn-hide" onclick="changeStatus(this, 'hidden')">Hide</button>
+                    <button class="btn btn-restore" onclick="changeStatus(this, 'active')">Restore</button>
+                    <button class="btn btn-purge" onclick="purge(this)">Purge</button>
+                </div>`;
+            grid.prepend(card);
+            closeModal();
+            filterData('all', document.querySelectorAll('.tab')[0]);
+        }
+
+        function purge(btn) {
+            if(confirm("Permanently delete this category?")) btn.closest('.category-card').remove();
+        }
+    </script>
+</body>
+</html>
