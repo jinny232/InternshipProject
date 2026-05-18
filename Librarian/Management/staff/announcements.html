@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Announcements | Library Notice Board</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #eef2ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f8fafc;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --white: #ffffff;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--gray-50);
+            padding: 1.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+        }
+
+        .announcement-card {
+            background: var(--white);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s;
+        }
+
+        .announcement-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .announcement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .announcement-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .announcement-date {
+            font-size: 0.7rem;
+            color: var(--gray-600);
+        }
+
+        .announcement-content {
+            color: var(--gray-600);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .announcement-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.7rem;
+            color: var(--gray-600);
+            border-top: 1px solid var(--gray-200);
+            padding-top: 0.75rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+
+        .badge-high { background: #fee2e2; color: #991b1b; }
+        .badge-medium { background: #fed7aa; color: #9a3412; }
+        .badge-low { background: #d1fae5; color: #065f46; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            max-width: 600px;
+            width: 90%;
+            padding: 1.5rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--gray-600);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            font-family: inherit;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--gray-800);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+            z-index: 1100;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-600);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>📢 Library Announcements</h1>
+                <p style="color: var(--gray-600);">Share important news with patrons and staff</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAnnouncementModal()">+ New Announcement</button>
+        </div>
+
+        <div id="announcementsList"></div>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div id="announcementModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create Announcement</h3>
+                <button class="close-modal" onclick="closeModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form id="announcementForm">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="annTitle" required placeholder="e.g., Library Holiday Hours">
+                </div>
+                <div class="form-group">
+                    <label>Content / Message</label>
+                    <textarea id="annContent" rows="4" required placeholder="Enter announcement details..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="annPriority">
+                        <option value="high">🔴 High Priority</option>
+                        <option value="medium">🟠 Medium Priority</option>
+                        <option value="low">🟢 Low Priority</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Expiry Date (Optional)</label>
+                    <input type="date" id="annExpiry">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Publish Announcement</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let announcements = [];
+        let editingId = null;
+
+        function loadAnnouncements() {
+            const stored = localStorage.getItem('lms_announcements');
+            if (stored) {
+                announcements = JSON.parse(stored);
+            } else {
+                // Sample announcements
+                announcements = [
+                    {
+                        id: "ann-001",
+                        title: "Library Closed for Myanmar New Year",
+                        content: "The library will be closed from April 13-17 for Thingyan celebrations.",
+                        priority: "high",
+                        date: "2026-04-10",
+                        expiry: "2026-04-18",
+                        author: "Admin"
+                    },
+                    {
+                        id: "ann-002",
+                        title: "New Books Arrived!",
+                        content: "50 new books added to the collection including latest programming and AI titles.",
+                        priority: "medium",
+                        date: "2026-04-05",
+                        expiry: "",
+                        author: "Admin"
+                    }
+                ];
+                saveAnnouncements();
+            }
+            renderAnnouncements();
+        }
+
+        function saveAnnouncements() {
+            localStorage.setItem('lms_announcements', JSON.stringify(announcements));
+        }
+
+        function renderAnnouncements() {
+            const container = document.getElementById('announcementsList');
+            
+            if (announcements.length === 0) {
+                container.innerHTML = `<div class="empty-state">📭 No announcements yet. Click "New Announcement" to create one.</div>`;
+                return;
+            }
+
+            // Filter out expired announcements
+            const today = new Date().toISOString().split('T')[0];
+            const activeAnnouncements = announcements.filter(ann => !ann.expiry || ann.expiry >= today);
+            
+            activeAnnouncements.sort((a, b) => {
+                const priority = { high: 3, medium: 2, low: 1 };
+                return priority[b.priority] - priority[a.priority];
+            });
+
+            container.innerHTML = activeAnnouncements.map(ann => `
+                <div class="announcement-card">
+                    <div class="announcement-header">
+                        <div class="announcement-title">${escapeHtml(ann.title)}</div>
+                        <div class="announcement-date">📅 ${ann.date}</div>
+                    </div>
+                    <div class="announcement-content">${escapeHtml(ann.content)}</div>
+                    <div class="announcement-meta">
+                        <span class="badge badge-${ann.priority}">
+                            ${ann.priority === 'high' ? '🔴 High' : ann.priority === 'medium' ? '🟠 Medium' : '🟢 Low'} Priority
+                        </span>
+                        <span>👤 By: ${ann.author || 'Librarian'}</span>
+                        ${ann.expiry ? `<span>⏰ Expires: ${ann.expiry}</span>` : ''}
+                        <button class="btn-outline" style="margin-left:auto; padding:0.2rem 0.5rem;" onclick="deleteAnnouncement('${ann.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openAnnouncementModal(ann = null) {
+            if (ann) {
+                editingId = ann.id;
+                document.getElementById('modalTitle').innerText = 'Edit Announcement';
+                document.getElementById('annTitle').value = ann.title;
+                document.getElementById('annContent').value = ann.content;
+                document.getElementById('annPriority').value = ann.priority;
+                document.getElementById('annExpiry').value = ann.expiry || '';
+            } else {
+                editingId = null;
+                document.getElementById('modalTitle').innerText = 'Create Announcement';
+                document.getElementById('announcementForm').reset();
+            }
+            document.getElementById('announcementModal').classList.add('active');
+        }
+
+        document.getElementById('announcementForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newAnn = {
+                id: editingId || `ann-${Date.now()}`,
+                title: document.getElementById('annTitle').value,
+                content: document.getElementById('annContent').value,
+                priority: document.getElementById('annPriority').value,
+                expiry: document.getElementById('annExpiry').value,
+                date: new Date().toISOString().split('T')[0],
+                author: "Librarian"
+            };
+            
+            if (editingId) {
+                const index = announcements.findIndex(a => a.id === editingId);
+                if (index !== -1) announcements[index] = newAnn;
+                showToast('Announcement updated!');
+            } else {
+                announcements.unshift(newAnn);
+                showToast('Announcement published!');
+            }
+            
+            saveAnnouncements();
+            renderAnnouncements();
+            closeModal();
+        });
+
+        function deleteAnnouncement(id) {
+            if (confirm('Delete this announcement?')) {
+                announcements = announcements.filter(a => a.id !== id);
+                saveAnnouncements();
+                renderAnnouncements();
+                showToast('Announcement deleted');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('announcementModal').classList.remove('active');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+            });
+        }
+
+        loadAnnouncements();
+
+        window.openAnnouncementModal = openAnnouncementModal;
+        window.deleteAnnouncement = deleteAnnouncement;
+        window.closeModal = closeModal;
+    </script>
+</body>
+</html>
