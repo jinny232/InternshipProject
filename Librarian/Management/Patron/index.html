@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LMS | Patron Lifecycle Management</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --bg: #f8fafc;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 40px; margin: 0; }
+
+        .management-card { 
+            background: white; border-radius: 12px; border: 1px solid var(--border); 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden;
+        }
+        
+        .toolbar { padding: 20px; border-bottom: 1px solid var(--border); display: flex; gap: 15px; align-items: center; background: #fff; }
+        .search-box { flex-grow: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; border: 1px solid var(--border); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: #f8fafc; padding: 15px; text-align: left; font-weight: 600; color: #64748b; border-bottom: 2px solid var(--border); }
+        td { padding: 15px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        
+        .col-no { width: 30px; color: #94a3b8; font-weight: 600; }
+        .rfid-cell { font-family: monospace; font-weight: 600; color: var(--primary); background: #f5f3ff; padding: 4px 8px; border-radius: 4px; }
+        .fine-cell { font-weight: 700; color: var(--danger); }
+
+        .badge { padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-suspended { background: #fef3c7; color: #92400e; }
+
+        .btn-group { display: flex; gap: 6px; }
+        .btn { padding: 8px 12px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+        .btn-edit { background: #f1f5f9; color: #475569; }
+        .btn-delete { background: #fee2e2; color: #dc2626; }
+
+        /* Modal Layout */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content { background: white; padding: 2rem; border-radius: 12px; width: 500px; max-height: 90vh; overflow-y: auto; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group.full { grid-column: span 2; }
+        .form-group label { display: block; font-size: 0.7rem; font-weight: 700; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 0.9rem; }
+        
+        .rfid-input-wrapper { display: flex; gap: 5px; }
+        .btn-scan { background: #334155; color: white; border-radius: 6px; padding: 0 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div style="margin-bottom: 20px;">
+        <h1 style="margin:0">Patron Management</h1>
+        <p style="color: #64748b; margin: 5px 0 0;">Manage library patrons, RFID cards, and outstanding fines.</p>
+    </div>
+
+    <div class="management-card">
+        <div class="toolbar">
+            <input type="text" id="searchInput" class="search-box" placeholder="Search by Name, RFID, or Patron ID..." onkeyup="filterPatrons()">
+            <button class="btn" style="background: var(--primary); color: white; padding: 12px 20px;" onclick="openModal()">+ Add New Patron</button>
+        </div>
+        
+        <table id="patronTable">
+            <thead>
+                <tr>
+                    <th class="col-no">#</th>
+                    <th>Patron ID</th>
+                    <th>Name & Contact</th>
+                    <th>RFID Card No</th>
+                    <th>Join Date</th>
+                    <th>Fines Owed</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr class="patron-row">
+                    <td class="col-no">1</td>
+                    <td class="pid">PAT-1001</td>
+                    <td>
+                        <strong class="pname">Alice Henderson</strong><br>
+                        <small class="pemail">alice.h@example.com</small><br>
+                        <small class="pphone" style="color:#94a3b8">012-345-6789</small>
+                        <span class="paddress" style="display:none">123 Library St, NY</span>
+                    </td>
+                    <td><span class="rfid-cell">A0:B1:C2:D3</span></td>
+                    <td class="pdate">2024-01-15</td>
+                    <td class="fine-cell">$0.00</td>
+                    <td><span class="badge status-active">Active</span></td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-edit" onclick="openModal(this)">Edit</button>
+                            <button class="btn btn-delete" onclick="deleteRow(this)">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="patron-row">
+                    <td class="col-no">2</td>
+                    <td class="pid">PAT-1002</td>
+                    <td>
+                        <strong class="pname">Markus Wright</strong><br>
+                        <small class="pemail">m.wright@edu.co</small><br>
+                        <small class="pphone" style="color:#94a3b8">011-222-3333</small>
+                        <span class="paddress" style="display:none">456 College Blvd, CA</span>
+                    </td>
+                    <td><span class="rfid-cell">F9:E8:D7:C6</span></td>
+                    <td class="pdate">2023-11-05</td>
+                    <td class="fine-cell">$15.75</td>
+                    <td><span class="badge status-suspended">Suspended</span></td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-edit" onclick="openModal(this)">Edit</button>
+                            <button class="btn btn-delete" onclick="deleteRow(this)">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal-overlay" id="patronModal">
+        <div class="modal-content">
+            <h2 id="modalTitle" style="margin-top:0">Edit Patron Details</h2>
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Patron ID</label>
+                    <input type="text" id="fieldID" placeholder="e.g. PAT-1234">
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="fieldName">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="fieldEmail">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="fieldPhone">
+                </div>
+                <div class="form-group">
+                    <label>Fines Owed (USD)</label>
+                    <input type="number" step="0.01" id="fieldFines">
+                </div>
+                <div class="form-group full">
+                    <label>Address</label>
+                    <input type="text" id="fieldAddress">
+                </div>
+                <div class="form-group full">
+                    <label>RFID Card No</label>
+                    <div class="rfid-input-wrapper">
+                        <input type="text" id="fieldRFID" readonly style="background:#f1f5f9">
+                        <button class="btn-scan" onclick="simulateScan()">Scan</button>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn" style="flex:1; background:#f1f5f9" onclick="closeModal()">Cancel</button>
+                <button class="btn" style="flex:2; background:var(--primary); color:white" onclick="savePatron()">Save Patron Data</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let editTargetRow = null;
+
+        function openModal(btn = null) {
+            document.getElementById('patronModal').style.display = 'flex';
+            if(btn) {
+                editTargetRow = btn.closest('tr');
+                document.getElementById('modalTitle').innerText = "Edit Patron";
+                document.getElementById('fieldID').value = editTargetRow.querySelector('.pid').innerText;
+                document.getElementById('fieldName').value = editTargetRow.querySelector('.pname').innerText;
+                document.getElementById('fieldEmail').value = editTargetRow.querySelector('.pemail').innerText;
+                document.getElementById('fieldPhone').value = editTargetRow.querySelector('.pphone').innerText;
+                document.getElementById('fieldFines').value = editTargetRow.querySelector('.fine-cell').innerText.replace('$','');
+                document.getElementById('fieldAddress').value = editTargetRow.querySelector('.paddress').innerText;
+                document.getElementById('fieldRFID').value = editTargetRow.querySelector('.rfid-cell').innerText;
+            } else {
+                editTargetRow = null;
+                document.getElementById('modalTitle').innerText = "New Patron Registration";
+                document.querySelectorAll('.modal-content input').forEach(i => i.value = "");
+                document.getElementById('fieldFines').value = "0.00";
+            }
+        }
+
+        function closeModal() { document.getElementById('patronModal').style.display = 'none'; }
+
+        function simulateScan() {
+            document.getElementById('fieldRFID').value = "SCANNING...";
+            setTimeout(() => {
+                const hex = "0123456789ABCDEF";
+                let r = "";
+                for(let i=0; i<4; i++) r += hex[Math.floor(Math.random()*16)] + hex[Math.floor(Math.random()*16)] + (i==3 ? "" : ":");
+                document.getElementById('fieldRFID').value = r;
+            }, 800);
+        }
+
+        function savePatron() {
+            const data = {
+                id: document.getElementById('fieldID').value,
+                name: document.getElementById('fieldName').value,
+                email: document.getElementById('fieldEmail').value,
+                phone: document.getElementById('fieldPhone').value,
+                fines: document.getElementById('fieldFines').value,
+                address: document.getElementById('fieldAddress').value,
+                rfid: document.getElementById('fieldRFID').value
+            };
+
+            if(editTargetRow) {
+                editTargetRow.querySelector('.pid').innerText = data.id;
+                editTargetRow.querySelector('.pname').innerText = data.name;
+                editTargetRow.querySelector('.pemail').innerText = data.email;
+                editTargetRow.querySelector('.pphone').innerText = data.phone;
+                editTargetRow.querySelector('.paddress').innerText = data.address;
+                editTargetRow.querySelector('.fine-cell').innerText = "$" + parseFloat(data.fines).toFixed(2);
+                editTargetRow.querySelector('.rfid-cell').innerText = data.rfid;
+            } else {
+                const tbody = document.getElementById('tableBody');
+                const newRow = tbody.insertRow();
+                newRow.className = "patron-row";
+                newRow.innerHTML = `
+                    <td class="col-no"></td>
+                    <td class="pid">${data.id}</td>
+                    <td>
+                        <strong class="pname">${data.name}</strong><br>
+                        <small class="pemail">${data.email}</small><br>
+                        <small class="pphone" style="color:#94a3b8">${data.phone}</small>
+                        <span class="paddress" style="display:none">${data.address}</span>
+                    </td>
+                    <td><span class="rfid-cell">${data.rfid}</span></td>
+                    <td class="pdate">${new Date().toISOString().split('T')[0]}</td>
+                    <td class="fine-cell">$${parseFloat(data.fines).toFixed(2)}</td>
+                    <td><span class="badge status-active">Active</span></td>
+                    <td><div class="btn-group"><button class="btn btn-edit" onclick="openModal(this)">Edit</button><button class="btn btn-delete" onclick="deleteRow(this)">Delete</button></div></td>
+                `;
+            }
+            closeModal();
+            filterPatrons();
+        }
+
+        function deleteRow(btn) {
+            if(confirm("Permanently delete this patron?")) {
+                btn.closest('tr').remove();
+                filterPatrons();
+            }
+        }
+
+        function filterPatrons() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('.patron-row');
+            let count = 0;
+            rows.forEach(row => {
+                const match = row.innerText.toLowerCase().includes(q);
+                row.style.display = match ? "" : "none";
+                if(match) row.querySelector('.col-no').innerText = ++count;
+            });
+        }
+        // --- RFID Global Listener ---
+let scanBuffer = "";
+let lastKeyTime = Date.now();
+
+window.addEventListener('keydown', (e) => {
+    const currentTime = Date.now();
+    const searchInput = document.getElementById('searchInput');
+
+    // Scanners type much faster than humans (usually < 30ms per key)
+    if (currentTime - lastKeyTime > 100) {
+        scanBuffer = ""; // Clear buffer if it was a slow human typing
+    }
+
+    if (e.key === "Enter") {
+        if (scanBuffer.length > 2) {
+            // It was a scan! Fill search box and filter
+            searchInput.value = scanBuffer;
+            filterPatrons(); 
+            scanBuffer = "";
+            e.preventDefault();
+        }
+    } else {
+        // Append characters to buffer if they aren't control keys
+        if (e. key.length === 1) {
+            scanBuffer += e.key;
+        }
+    }
+    lastKeyTime = currentTime;
+});
+    </script>
+</body>
+</html>
