@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFID Hardware Configuration</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --gray-50: #f8fafc;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --white: #ffffff;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-50); padding: 1.5rem; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { margin-bottom: 2rem; }
+        .card { background: var(--white); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-md); }
+        .card h3 { margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--gray-600); margin-bottom: 0.25rem; }
+        .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid var(--gray-200); border-radius: 0.5rem; }
+        .btn { padding: 0.6rem 1.2rem; border-radius: 0.5rem; border: none; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .status-indicator { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 2rem; }
+        .status-online { background: #d1fae5; color: #065f46; }
+        .status-offline { background: #fee2e2; color: #991b1b; }
+        .status-testing { background: #fed7aa; color: #9a3412; }
+        .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--gray-800); color: white; padding: 0.75rem 1.5rem; border-radius: 2rem; animation: slideIn 0.3s; z-index: 1000; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .test-result { margin-top: 1rem; padding: 1rem; background: var(--gray-100); border-radius: 0.5rem; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📡 RFID Hardware Configuration</h1>
+            <p style="color: var(--gray-600);">Configure RFID reader settings and test connectivity</p>
+        </div>
+
+        <div class="card">
+            <h3>🔌 Reader Connection Settings</h3>
+            <div class="form-group">
+                <label>Connection Type</label>
+                <select id="connType">
+                    <option value="usb">USB (Virtual COM Port)</option>
+                    <option value="serial">Serial Port (RS-232)</option>
+                    <option value="network">Network / TCP-IP</option>
+                </select>
+            </div>
+            <div class="form-group" id="portGroup">
+                <label>COM Port / Device</label>
+                <input type="text" id="comPort" placeholder="e.g., COM3 or /dev/ttyUSB0">
+            </div>
+            <div class="form-group" id="baudGroup">
+                <label>Baud Rate</label>
+                <select id="baudRate">
+                    <option value="9600">9600</option>
+                    <option value="19200">19200</option>
+                    <option value="38400">38400</option>
+                    <option value="115200" selected>115200</option>
+                </select>
+            </div>
+            <div class="form-group" id="networkGroup" style="display: none;">
+                <label>IP Address</label>
+                <input type="text" id="ipAddress" placeholder="192.168.1.100">
+                <label style="margin-top: 0.5rem;">Port</label>
+                <input type="text" id="ipPort" placeholder="5000">
+            </div>
+            <button class="btn btn-primary" onclick="saveHardwareSettings()">Save Settings</button>
+        </div>
+
+        <div class="card">
+            <h3>🔍 Reader Status & Test</h3>
+            <div id="readerStatus" class="status-indicator status-offline">⚫ Reader Offline</div>
+            <div style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="testConnection()">📡 Test Connection</button>
+                <button class="btn" onclick="simulateScan()" style="background: var(--warning); color: white;">🔍 Simulate Tag Scan</button>
+                <button class="btn btn-success" onclick="reconnectReader()">🔄 Reconnect</button>
+            </div>
+            <div id="testResult" class="test-result" style="display: none;"></div>
+        </div>
+
+        <div class="card">
+            <h3>📋 Reader Logs</h3>
+            <div id="readerLogs" style="background: var(--gray-800); color: #10b981; padding: 1rem; border-radius: 0.5rem; font-family: monospace; font-size: 0.7rem; max-height: 200px; overflow-y: auto;">
+                [INFO] Reader initialized<br>
+                [INFO] Waiting for connection...
+            </div>
+            <button class="btn" style="margin-top: 0.5rem;" onclick="clearLogs()">Clear Logs</button>
+        </div>
+    </div>
+
+    <script>
+        let readerConnected = false;
+        let logs = ['[INFO] Reader initialized', '[INFO] Waiting for connection...'];
+
+        function addLog(message) {
+            logs.unshift(`[${new Date().toLocaleTimeString()}] ${message}`);
+            if (logs.length > 50) logs.pop();
+            document.getElementById('readerLogs').innerHTML = logs.map(l => `${l}<br>`).join('');
+        }
+
+        function saveHardwareSettings() {
+            const settings = {
+                connectionType: document.getElementById('connType').value,
+                comPort: document.getElementById('comPort').value,
+                baudRate: document.getElementById('baudRate').value,
+                ipAddress: document.getElementById('ipAddress').value,
+                ipPort: document.getElementById('ipPort').value
+            };
+            localStorage.setItem('rfid_hardware_settings', JSON.stringify(settings));
+            showToast('Hardware settings saved');
+            addLog('Settings saved to local storage');
+        }
+
+        function loadHardwareSettings() {
+            const saved = localStorage.getItem('rfid_hardware_settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                document.getElementById('connType').value = settings.connectionType || 'usb';
+                document.getElementById('comPort').value = settings.comPort || '';
+                document.getElementById('baudRate').value = settings.baudRate || '115200';
+                document.getElementById('ipAddress').value = settings.ipAddress || '';
+                document.getElementById('ipPort').value = settings.ipPort || '';
+            }
+            updateConnectionUI();
+        }
+
+        function updateConnectionUI() {
+            const connType = document.getElementById('connType').value;
+            const portGroup = document.getElementById('portGroup');
+            const baudGroup = document.getElementById('baudGroup');
+            const networkGroup = document.getElementById('networkGroup');
+            
+            if (connType === 'network') {
+                portGroup.style.display = 'none';
+                baudGroup.style.display = 'none';
+                networkGroup.style.display = 'block';
+            } else {
+                portGroup.style.display = 'block';
+                baudGroup.style.display = 'block';
+                networkGroup.style.display = 'none';
+            }
+        }
+
+        document.getElementById('connType').addEventListener('change', updateConnectionUI);
+
+        function testConnection() {
+            const statusDiv = document.getElementById('readerStatus');
+            const resultDiv = document.getElementById('testResult');
+            
+            statusDiv.className = 'status-indicator status-testing';
+            statusDiv.innerHTML = '🟡 Testing Connection...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing reader connection...';
+            
+            setTimeout(() => {
+                // Simulate connection test
+                const isSuccess = Math.random() > 0.3;
+                if (isSuccess) {
+                    readerConnected = true;
+                    statusDiv.className = 'status-indicator status-online';
+                    statusDiv.innerHTML = '🟢 Reader Online';
+                    resultDiv.innerHTML = '✅ RFID Reader connected successfully!\n\nDetected Model: R2000 UHF Reader\nFirmware: v2.1.4\nAntenna Power: 30dBm';
+                    addLog('Connection test SUCCESSFUL');
+                    showToast('Reader connected successfully');
+                } else {
+                    readerConnected = false;
+                    statusDiv.className = 'status-indicator status-offline';
+                    statusDiv.innerHTML = '⚫ Reader Offline';
+                    resultDiv.innerHTML = '❌ Failed to connect to RFID reader.\n\nCheck:\n- USB/COM port connection\n- Power supply\n- Driver installation';
+                    addLog('Connection test FAILED');
+                    showToast('Connection failed', true);
+                }
+            }, 1500);
+        }
+
+        function reconnectReader() {
+            const statusDiv = document.getElementById('readerStatus');
+            statusDiv.className = 'status-indicator status-testing';
+            statusDiv.innerHTML = '🟡 Reconnecting...';
+            addLog('Attempting to reconnect...');
+            
+            setTimeout(() => {
+                readerConnected = true;
+                statusDiv.className = 'status-indicator status-online';
+                statusDiv.innerHTML = '🟢 Reader Online';
+                addLog('Reader reconnected successfully');
+                showToast('Reader reconnected');
+            }, 1000);
+        }
+
+        function simulateScan() {
+            if (!readerConnected) {
+                showToast('Please connect to reader first', true);
+                return;
+            }
+            
+            addLog('Tag detected! Reader antenna active');
+            const randomTag = `RFID-${Math.floor(Math.random() * 10000).toString(16).toUpperCase().padStart(4, '0')}`;
+            addLog(`Scanned tag: ${randomTag}`);
+            showToast(`Tag scanned: ${randomTag}`);
+            
+            // Dispatch custom event for other pages to listen
+            window.dispatchEvent(new CustomEvent('rfidTagScanned', { detail: { tag: randomTag } }));
+        }
+
+        function clearLogs() {
+            logs = ['[INFO] Logs cleared', '[INFO] Waiting for connection...'];
+            document.getElementById('readerLogs').innerHTML = logs.map(l => `${l}<br>`).join('');
+            showToast('Logs cleared');
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = isError ? '#ef4444' : '#1e293b';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        loadHardwareSettings();
+
+        window.saveHardwareSettings = saveHardwareSettings;
+        window.testConnection = testConnection;
+        window.reconnectReader = reconnectReader;
+        window.simulateScan = simulateScan;
+        window.clearLogs = clearLogs;
+    </script>
+</body>
+</html>
