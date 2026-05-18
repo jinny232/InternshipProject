@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS - Secure Login</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 400px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+        }
+
+        .scanner-icon {
+            color: #2563eb;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+        }
+
+        .instruction-text {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        /* Hidden input for RFID reader */
+        #rfid-input {
+            opacity: 0;
+            position: absolute;
+        }
+
+        /* Waiting Signal UI */
+        .signal-container {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        .loading-bar {
+            height: 4px;
+            width: 100%;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress {
+            width: 30%;
+            height: 100%;
+            background: #2563eb;
+            animation: slide 1.5s infinite linear;
+        }
+
+        .waiting-text {
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        /* Footer Info */
+        .footer-info {
+            margin-top: 2.5rem;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes slide {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(400%); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="status-badge">SYSTEM READY</div>
+
+        <div class="scanner-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 10a8 8 0 0 1 16 0M7 10a5 5 0 0 1 10 0M10 10a2 2 0 0 1 4 0"></path>
+                <rect x="2" y="14" width="20" height="8" rx="2"></rect>
+                <path d="M6 18h.01M10 18h.01M14 18h.01"></path>
+            </svg>
+        </div>
+
+        <h1>Librarian Access</h1>
+        <p class="instruction-text">
+            Please scan your <strong>Access Identification Card</strong> to initiate the secure login process.
+        </p>
+        
+        <input type="password" id="rfid-input" autofocus autocomplete="off">
+        
+        <div class="signal-container">
+            <div class="loading-bar">
+                <div class="progress"></div>
+            </div>
+            <div class="waiting-text">Waiting for card signal...</div>
+        </div>
+
+        <div class="footer-info">
+            RFID Library Management System v1.0<br>
+            <strong>Secure Multi-Factor Authentication Active</strong>
+        </div>
+    </div>
+
+    <script>
+        const rfidInput = document.getElementById('rfid-input');
+        
+        // Listen for RFID input (reader acts as keyboard)
+        rfidInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                // Change filename below to match your Screen 2 file
+                window.location.href = "password.html"; 
+            }
+        });
+
+        // Ensure the input stays focused even if the user clicks away
+        document.addEventListener('click', () => {
+            rfidInput.focus();
+        });
+    </script>
+</body>
+</html>
