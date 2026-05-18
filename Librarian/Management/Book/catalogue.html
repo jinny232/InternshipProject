@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cataloguing Stage - LMS</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #0891b2;
+            --bg: #f8fafc;
+            --border: #cbd5e1;
+            --text: #1e293b;
+            --rfid-bg: #fffbeb;
+            --rfid-border: #fde68a;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; margin: 0; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 2.5rem; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        
+        .header { border-bottom: 2px solid var(--bg); padding-bottom: 1rem; margin-bottom: 2rem; }
+        h2 { font-size: 1.1rem; color: var(--primary); border-left: 4px solid var(--primary); padding-left: 10px; margin: 2rem 0 1rem 0; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .span-2 { grid-column: span 2; }
+        .full-width { grid-column: span 3; }
+
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 0.8rem; font-weight: 600; color: #64748b; text-transform: uppercase; }
+        
+        input, select, textarea { 
+            padding: 11px; border: 1px solid var(--border); border-radius: 8px; 
+            font-size: 0.95rem; outline: none; background: #fff; width: 100%; box-sizing: border-box;
+        }
+
+        /* Number input cleaning */
+        input[type="number"] { -moz-appearance: textfield; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        textarea { resize: vertical; min-height: 70px; }
+        input:focus, select:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1); }
+
+        .rfid-box { background: var(--rfid-bg); border: 2px solid var(--rfid-border); padding: 20px; border-radius: 12px; margin: 20px 0; }
+        .checkbox-group { flex-direction: row; align-items: center; gap: 10px; padding: 10px 0; }
+        .checkbox-group input { width: 18px; height: 18px; }
+
+        .footer { margin-top: 3rem; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #f1f5f9; padding-top: 2rem; }
+        .btn { padding: 12px 30px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-secondary { background: #f1f5f9; color: #64748b; }
+        .btn-success { background: #10b981; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>စာအုပ်အချက်အလက်သွင်းခြင်း (Adding Detail Informations)</h1>
+    </div>
+
+    <form action="index.html" method="POST">
+        
+        <div class="rfid-box">
+            <div class="form-group full-width">
+                <label style="color: #92400e;">📡 RFID Tag နံပါတ် (စာအုပ်နောက်ကျော Tag ကို စကန်ဖတ်ပါ)</label>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <input type="text" name="rfid_no" maxlength="50" style="border: 2px solid #fbbf24; font-weight: bold;" placeholder="Waiting for RFID Scan..." readonly>
+                    <button type="button" class="btn" style="background: #fbbf24; color: #92400e;">Scan Again</button>
+                </div>
+            </div>
+        </div>
+
+        <h2>ခေါင်းစဉ်နှင့် ပါဝင်သူများ (Titles & Contributors)</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>ခေါင်းစဉ်ခွဲ (Sub Title)</label><input type="text" name="subTitle" maxlength="200"></div>
+            <div class="form-group"><label>ခေါင်းစဉ်ပြိုင် (Parallel Title)</label><input type="text" name="parallelTitle" maxlength="200"></div>
+            <div class="form-group"><label>ခေါင်းစဉ်အမည်ကွဲ (Other Title)</label><input type="text" name="otherTitle" maxlength="200"></div>
+            <div class="form-group"><label>မူရင်းခေါင်းစဉ် (Original Title)</label><input type="text" name="originalTitle" maxlength="200"></div>
+            <div class="form-group"><label>ဘာသာပြန်သူ (Translator)</label><input type="text" name="translator" maxlength="100"></div>
+            <div class="form-group"><label>တည်းဖြတ်သူ (Editor)</label><input type="text" name="editor" maxlength="100"></div>
+            <div class="form-group"><label>ပုံဆွဲသူ (Illustrator)</label><input type="text" name="illustrator" maxlength="100"></div>
+            <div class="form-group"><label>မေးမြန်းသူ (Interviewer)</label><input type="text" name="interviewer" maxlength="100"></div>
+            <div class="form-group"><label>စီစဉ်သူ/ စုစည်းသူ (Compiler)</label><input type="text" name="compiler" maxlength="100"></div>
+        </div>
+
+        <h2>စာအုပ်၏ အသွင်အပြင် (Physical Details)</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>စာမျက်နှာ (No. of Pages)</label><input type="number" name="numPages" max="99999"></div>
+            <div class="form-group"><label>အရွယ်အစား (Size)</label><input type="text" name="size" maxlength="50"></div>
+            <div class="form-group"><label>စာစဉ် (Series)</label><input type="text" name="series" maxlength="150"></div>
+            <div class="form-group checkbox-group">
+                <input type="checkbox" name="illustrations" id="illus">
+                <label for="illus" style="text-transform: none;">ပုံများ ပါဝင်သလား? (Illustrations)</label>
+            </div>
+        </div>
+
+        <h2>ထုတ်ဝေမှုဆိုင်ရာ (Publishing)</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>ထုတ်ဝေသူ (Publisher)</label><input type="text" name="publisher" maxlength="150"></div>
+            <div class="form-group"><label>ဖြန့်ချိသူအမည် (Distributor)</label><input type="text" name="distributor" maxlength="150"></div>
+            <div class="form-group"><label>ထုတ်ဝေသည့်အုပ်ရေ (Quantity)</label><input type="number" name="publishedQuantity" max="9999999"></div>
+            <div class="form-group"><label>ထုတ်ဝေသည့်နေရာ (Place)</label><input type="text" name="placeOfPublication" maxlength="100"></div>
+            <div class="form-group"><label>ထုတ်ဝေသည့်နိုင်ငံ (Country)</label><input type="text" name="publishedCountry" maxlength="100"></div>
+            <div class="form-group">
+                <label>တန်ဖိုး (Price)</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="number" name="price" step="0.01" style="flex: 2;" placeholder="Amount">
+                    <select name="currency" style="flex: 1;">
+                        <option>MMK</option>
+                        <option>USD ($)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <h2>အညွှန်းနှင့် အခြေအနေ (Identifiers & Status)</h2>
+        <div class="form-grid">
+<div class="form-group">
+        <label>ISBN (13-Digit Standard)</label>
+        <input type="text" 
+               name="isbn" 
+               pattern="^(978|979)\d{10}$" 
+               title="Must be 13 digits starting with 978 or 979 (ISO 2108)" 
+               placeholder="e.g. 9786024444655">
+    </div>           
+<div class="form-group">
+        <label>LCCN (Standard format)</label>
+        <input type="text" 
+               name="lccn" 
+               pattern="\d{2}\d{6}" 
+               title="Format: YYNNNNNN (e.g., 20000123)" 
+               placeholder="e.g. 20261234">
+    </div>            <div class="form-group">
+                <label>စာအုပ်အခြေအနေ (Status)</label>
+                <select name="status">
+                    <option value="Available">Available</option>
+                    <option value="Borrowed">Borrowed</option>
+                    <option value="Archived">Archived</option>
+                    <option value="Lost">Lost</option>
+                </select>
+            </div>
+            <div class="form-group"><label>ရည်ညွှန်းအမျိုးအစား (Ref Type)</label><input type="text" name="refType" maxlength="100"></div>
+            <div class="form-group"><label>ရည်ညွှန်းသတ်မှတ်ရက်စွဲ (Ref Date)</label><input type="date" name="refDate"></div>
+        </div>
+
+        <h2>အနှစ်ချုပ်နှင့် ဝေဖန်ချက် (Metadata)</h2>
+        <div class="form-grid">
+            <div class="form-group span-2"><label>အဓိကစကားလုံးများ (Keywords)</label><input type="text" name="keywords" maxlength="255"></div>
+            <div class="form-group"><label>မာတိကာ (Index)</label><input type="text" name="index" maxlength="100"></div>
+            <div class="form-group full-width"><label>အနှစ်ချုပ် (Summary)</label><textarea name="summary" maxlength="2000"></textarea></div>
+            <div class="form-group full-width"><label>အနှစ်ချုပ် (Annotation)</label><textarea name="annotation" maxlength="2000"></textarea></div>
+            <div class="form-group full-width"><label>မှတ်ချက် (Remark)</label><textarea name="remark" maxlength="1000"></textarea></div>
+            <div class="form-group full-width"><label>မှတ်စု (Notes)</label><textarea name="notes" maxlength="1000"></textarea></div>
+            <div class="form-group full-width"><label>Book Review</label><textarea name="bookReview" maxlength="3000"></textarea></div>
+        </div>
+
+        <div class="footer">
+            <button type="button" class="btn btn-secondary" onclick="history.back()">Back</button>
+            <button type="submit" class="btn btn-success">Save Book Data</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>
