@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Reports | Library Management System - Analytics Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #eef2ff;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fed7aa;
+            --info: #0ea5e9;
+            --info-light: #e0f2fe;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .logo p {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-card h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-card .trend {
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+            color: var(--gray-600);
+        }
+
+        /* Report Panel */
+        .report-panel {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .report-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Action Buttons Group - Moved inside report header */
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-800);
+            border: 1px solid var(--gray-200);
+        }
+
+        .btn-refresh {
+            background: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        .btn-refresh:hover {
+            background: var(--gray-200);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .filter-item label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--gray-600);
+            text-transform: uppercase;
+        }
+
+        .filter-item input, .filter-item select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            background: white;
+        }
+
+        /* Report Table */
+        .report-table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 0.75rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .report-table th {
+            position: sticky;
+            top: 0;
+            background: var(--gray-100);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 2px solid var(--gray-200);
+            z-index: 10;
+        }
+
+        .report-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .report-table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .total-row {
+            background: var(--gray-100);
+            font-weight: 700;
+            position: sticky;
+            bottom: 0;
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .chart-card {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .chart-card h4 {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .bar-label {
+            width: 120px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .bar {
+            flex: 1;
+            height: 28px;
+            background: var(--primary-light);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.5rem;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: width 0.5s ease;
+        }
+
+        .pie-chart {
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .simple-pie {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) 0% 45%, var(--success) 45% 70%, var(--warning) 70% 85%, var(--danger) 85% 100%);
+            margin-bottom: 1rem;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.7rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        /* Tabs */
+        .report-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .report-tab {
+            padding: 0.6rem 1.25rem;
+            border: none;
+            background: var(--gray-100);
+            border-radius: 2rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .report-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+
+        .status-borrowed { background: var(--info-light); color: #0369a1; }
+        .status-overdue { background: var(--danger-light); color: #991b1b; }
+        .status-renewed { background: var(--success-light); color: #065f46; }
+        .status-returned { background: var(--gray-100); color: var(--gray-600); }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--gray-800);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .btn, .report-tabs, .filter-section, .action-buttons, .header-actions {
+                display: none;
+            }
+            .report-panel {
+                box-shadow: none;
+                padding: 0;
+            }
+            .stats-grid {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header - Removed action buttons, now only logo and title -->
+        <div class="header">
+            <div class="logo">
+                <h1>Dashboard</h1>
+            </div>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h4>Total Books</h4>
+                <div class="number" id="totalBooks">0</div>
+                <div class="trend" id="bookTrend">📚 In collection</div>
+            </div>
+            <div class="stat-card">
+                <h4>Active Loans</h4>
+                <div class="number" id="activeLoans">0</div>
+                <div class="trend" id="loanTrend">📖 Currently borrowed</div>
+            </div>
+            <div class="stat-card">
+                <h4>Overdue Books</h4>
+                <div class="number" id="overdueBooks">0</div>
+                <div class="trend" id="overdueTrend">⚠️ Need attention</div>
+            </div>
+            <div class="stat-card">
+                <h4>Total Patrons</h4>
+                <div class="number" id="totalPatrons">0</div>
+                <div class="trend" id="patronTrend">👥 Registered users</div>
+            </div>
+            <div class="stat-card">
+                <h4>Total Fines</h4>
+                <div class="number" id="totalFines">$0</div>
+                <div class="trend" id="fineTrend">💰 Unpaid + Paid</div>
+            </div>
+            <div class="stat-card">
+                <h4>Circulation Rate</h4>
+                <div class="number" id="circRate">0%</div>
+                <div class="trend" id="rateTrend">📈 Monthly activity</div>
+            </div>
+        </div>
+
+        <!-- Report Panel -->
+        <div class="report-panel">
+            <div class="report-header">
+                <div class="report-title">
+                    <span>📈</span> Report Generation Center
+                </div>
+                <!-- Action Buttons moved here inside report generation center -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="exportToCSV()">📎 Export CSV</button>
+                    <button class="btn btn-success" onclick="printReport()">🖨️ Print</button>
+                    <button class="btn btn-warning" onclick="saveAsPDF()">📄 Save PDF</button>
+                    <button class="btn btn-refresh" onclick="refreshAllData()">🔄 Refresh</button>
+                </div>
+            </div>
+
+            <!-- Report Tabs -->
+            <div class="report-tabs">
+                <button class="report-tab active" onclick="switchReport('overdue', this)">⚠️ Overdue Books</button>
+                <button class="report-tab" onclick="switchReport('circulation', this)">📊 Circulation Report</button>
+                <button class="report-tab" onclick="switchReport('patronHistory', this)">👤 Patron History</button>
+                <button class="report-tab" onclick="switchReport('popularBooks', this)">⭐ Popular Books</button>
+                <button class="report-tab" onclick="switchReport('categoryStats', this)">📚 Category Stats</button>
+                <button class="report-tab" onclick="switchReport('fineReport', this)">💰 Fine Report</button>
+                <button class="report-tab" onclick="switchReport('activityLog', this)">📋 Activity Log</button>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section" id="filterSection">
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <label>Date From</label>
+                        <input type="date" id="fromDate">
+                    </div>
+                    <div class="filter-item">
+                        <label>Date To</label>
+                        <input type="date" id="toDate">
+                    </div>
+                    <div class="filter-item" id="patronFilter" style="display: none;">
+                        <label>Select Patron</label>
+                        <select id="patronSelect"></select>
+                    </div>
+                    <div class="filter-item">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Content -->
+            <div id="reportContent">
+                <!-- Dynamic content -->
+            </div>
+
+            <!-- Charts Section -->
+            <div id="chartsSection"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============ MOCK DATABASE ============
+        let transactions = [
+            { id: "TR001", bookId: "BK-202", bookTitle: "Data Structures & Algorithms", category: "Computer Science", patronId: "PAT-1001", patronName: "Alice Henderson", checkoutDate: "2026-04-15", dueDate: "2026-05-01", returnDate: null, renewedCount: 0, status: "overdue", finePerDay: 0.50, finePaid: false },
+            { id: "TR002", bookId: "BK-505", bookTitle: "Modern Artificial Intelligence", category: "Computer Science", patronId: "PAT-2023", patronName: "Markus Wright", checkoutDate: "2026-05-06", dueDate: "2026-05-20", returnDate: null, renewedCount: 0, status: "borrowed", finePerDay: 0.50, finePaid: false },
+            { id: "TR003", bookId: "BK-101", bookTitle: "The Pragmatic Programmer", category: "Programming", patronId: "PAT-0456", patronName: "Elena Rodriguez", checkoutDate: "2026-05-01", dueDate: "2026-05-15", returnDate: "2026-05-18", renewedCount: 0, status: "returned", finePerDay: 0.50, finePaid: true, fineAmount: 1.50 },
+            { id: "TR004", bookId: "BK-777", bookTitle: "Cloud Computing Essentials", category: "Cloud Computing", patronId: "PAT-1001", patronName: "Alice Henderson", checkoutDate: "2026-05-08", dueDate: "2026-05-22", returnDate: null, renewedCount: 0, status: "borrowed", finePerDay: 0.50, finePaid: false },
+            { id: "TR005", bookId: "BK-888", bookTitle: "Cybersecurity Fundamentals", category: "Security", patronId: "PAT-2023", patronName: "Markus Wright", checkoutDate: "2026-05-10", dueDate: "2026-05-24", returnDate: null, renewedCount: 1, status: "renewed", finePerDay: 0.50, finePaid: false },
+            { id: "TR006", bookId: "BK-999", bookTitle: "Machine Learning in Practice", category: "Computer Science", patronId: "PAT-0999", patronName: "John Smith", checkoutDate: "2026-04-25", dueDate: "2026-05-09", returnDate: "2026-05-12", renewedCount: 0, status: "returned", finePerDay: 0.50, finePaid: false, fineAmount: 1.50 },
+            { id: "TR007", bookId: "BK-301", bookTitle: "Database Management Systems", category: "Database", patronId: "PAT-1001", patronName: "Alice Henderson", checkoutDate: "2026-05-12", dueDate: "2026-05-26", returnDate: null, renewedCount: 0, status: "borrowed", finePerDay: 0.50, finePaid: false },
+            { id: "TR008", bookId: "BK-401", bookTitle: "Web Development with React", category: "Web Dev", patronId: "PAT-0456", patronName: "Elena Rodriguez", checkoutDate: "2026-05-14", dueDate: "2026-05-28", returnDate: null, renewedCount: 0, status: "borrowed", finePerDay: 0.50, finePaid: false }
+        ];
+
+        let patrons = [
+            { id: "PAT-1001", name: "Alice Henderson", email: "alice@library.com", phone: "555-0101", joinDate: "2025-01-15" },
+            { id: "PAT-2023", name: "Markus Wright", email: "markus@library.com", phone: "555-0102", joinDate: "2025-03-20" },
+            { id: "PAT-0456", name: "Elena Rodriguez", email: "elena@library.com", phone: "555-0103", joinDate: "2025-06-10" },
+            { id: "PAT-0999", name: "John Smith", email: "john@library.com", phone: "555-0104", joinDate: "2026-01-05" }
+        ];
+
+        let books = [
+            { id: "BK-202", title: "Data Structures & Algorithms", category: "Computer Science" },
+            { id: "BK-505", title: "Modern Artificial Intelligence", category: "Computer Science" },
+            { id: "BK-101", title: "The Pragmatic Programmer", category: "Programming" },
+            { id: "BK-777", title: "Cloud Computing Essentials", category: "Cloud Computing" },
+            { id: "BK-888", title: "Cybersecurity Fundamentals", category: "Security" },
+            { id: "BK-999", title: "Machine Learning in Practice", category: "Computer Science" },
+            { id: "BK-301", title: "Database Management Systems", category: "Database" },
+            { id: "BK-401", title: "Web Development with React", category: "Web Dev" }
+        ];
+
+        let currentReport = "overdue";
+        let filteredTransactions = [...transactions];
+
+        // Helper Functions
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function calculateFine(dueDate, returnDate = null) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const due = new Date(dueDate);
+            due.setHours(0, 0, 0, 0);
+            const endDate = returnDate ? new Date(returnDate) : today;
+            
+            if (endDate <= due) return 0;
+            const daysOverdue = Math.ceil((endDate - due) / (1000 * 60 * 60 * 24));
+            return daysOverdue * 0.50;
+        }
+
+        function applyDateFilter() {
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            
+            filteredTransactions = transactions.filter(t => {
+                if (fromDate && t.checkoutDate < fromDate) return false;
+                if (toDate && t.checkoutDate > toDate) return false;
+                return true;
+            });
+            
+            if (currentReport === 'patronHistory') {
+                const patronId = document.getElementById('patronSelect')?.value;
+                if (patronId && patronId !== 'all') {
+                    filteredTransactions = filteredTransactions.filter(t => t.patronId === patronId);
+                }
+            }
+            
+            refreshReport();
+        }
+
+        function applyFilters() {
+            applyDateFilter();
+            showToast("Filters applied successfully", false);
+        }
+
+        function updateStats() {
+            const activeLoans = transactions.filter(t => !t.returnDate).length;
+            const overdue = transactions.filter(t => {
+                if (t.returnDate) return false;
+                return new Date(t.dueDate) < new Date();
+            }).length;
+            const totalFines = transactions.reduce((sum, t) => sum + calculateFine(t.dueDate, t.returnDate), 0);
+            const totalBooks = books.length;
+            const totalPatrons = patrons.length;
+            const monthlyCheckouts = transactions.filter(t => {
+                const checkout = new Date(t.checkoutDate);
+                const now = new Date();
+                return checkout.getMonth() === now.getMonth() && checkout.getFullYear() === now.getFullYear();
+            }).length;
+            const circRate = ((monthlyCheckouts / totalBooks) * 100).toFixed(1);
+            
+            document.getElementById('totalBooks').textContent = totalBooks;
+            document.getElementById('activeLoans').textContent = activeLoans;
+            document.getElementById('overdueBooks').textContent = overdue;
+            document.getElementById('totalPatrons').textContent = totalPatrons;
+            document.getElementById('totalFines').textContent = `$${totalFines.toFixed(2)}`;
+            document.getElementById('circRate').textContent = `${circRate}%`;
+        }
+
+        // Report Generators
+        function generateOverdueReport() {
+            const overdueBooks = filteredTransactions.filter(t => {
+                if (t.returnDate) return false;
+                return new Date(t.dueDate) < new Date();
+            });
+            
+            let html = `<div class="report-table-container">
+                <table class="report-table">
+                    <thead>
+                        <tr><th>Book Title</th><th>Book ID</th><th>Patron Name</th><th>Due Date</th><th>Days Overdue</th><th>Fine Amount</th></tr>
+                    </thead>
+                    <tbody>`;
+            
+            let totalFine = 0;
+            overdueBooks.forEach(book => {
+                const daysOverdue = Math.ceil((new Date() - new Date(book.dueDate)) / (1000 * 60 * 60 * 24));
+                const fine = daysOverdue * 0.50;
+                totalFine += fine;
+                html += `<tr>
+                    <td><strong>${book.bookTitle}</strong></td>
+                    <td>${book.bookId}</td>
+                    <td>${book.patronName}</td>
+                    <td style="color:#ef4444;">${book.dueDate}</td>
+                    <td>${daysOverdue} days</td>
+                    <td style="color:#ef4444;">$${fine.toFixed(2)}</td>
+                </tr>`;
+            });
+            
+            html += `<tr class="total-row"><td colspan="5"><strong>Total Fines</strong></td><td><strong>$${totalFine.toFixed(2)}</strong></td></tr>`;
+            html += `</tbody></table></div>`;
+            
+            if (overdueBooks.length === 0) {
+                html = `<div style="text-align:center; padding:3rem;">✅ No overdue books! All items are on time.</div>`;
+            }
+            
+            return html;
+        }
+
+        function generateCirculationReport() {
+            const active = filteredTransactions.filter(t => !t.returnDate);
+            const returned = filteredTransactions.filter(t => t.returnDate);
+            const monthlyData = {};
+            
+            filteredTransactions.forEach(t => {
+                const month = t.checkoutDate.substring(0, 7);
+                if (!monthlyData[month]) monthlyData[month] = { checkouts: 0, returns: 0 };
+                monthlyData[month].checkouts++;
+                if (t.returnDate) monthlyData[month].returns++;
+            });
+            
+            let html = `<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;">
+                <div class="stat-card"><h4>Total Transactions</h4><div class="number">${filteredTransactions.length}</div></div>
+                <div class="stat-card"><h4>Active Loans</h4><div class="number">${active.length}</div></div>
+                <div class="stat-card"><h4>Completed Returns</h4><div class="number">${returned.length}</div></div>
+            </div>
+            <div class="report-table-container">
+                <table class="report-table">
+                    <thead><tr><th>Month</th><th>Checkouts</th><th>Returns</th><th>Net Growth</th></tr></thead>
+                    <tbody>`;
+            
+            for (let month in monthlyData) {
+                const net = monthlyData[month].checkouts - monthlyData[month].returns;
+                html += `<tr>
+                    <td>${month}</td>
+                    <td>${monthlyData[month].checkouts}</td>
+                    <td>${monthlyData[month].returns}</td>
+                    <td style="color: ${net >= 0 ? '#10b981' : '#ef4444'}">${net >= 0 ? '+' : ''}${net}</td>
+                </tr>`;
+            }
+            
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        function generatePatronHistoryReport() {
+            const patronId = document.getElementById('patronSelect')?.value;
+            const patronTransactions = filteredTransactions.filter(t => t.patronId === patronId);
+            const patron = patrons.find(p => p.id === patronId);
+            
+            if (!patron || patronTransactions.length === 0) {
+                return `<div style="text-align:center; padding:3rem;">Select a patron to view their borrowing history</div>`;
+            }
+            
+            let html = `<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;">
+                <div class="stat-card"><h4>Total Books Borrowed</h4><div class="number">${patronTransactions.length}</div></div>
+                <div class="stat-card"><h4>Currently Borrowed</h4><div class="number">${patronTransactions.filter(t => !t.returnDate).length}</div></div>
+                <div class="stat-card"><h4>Total Fines</h4><div class="number">$${patronTransactions.reduce((sum, t) => sum + calculateFine(t.dueDate, t.returnDate), 0).toFixed(2)}</div></div>
+            </div>
+            <div class="report-table-container">
+                <table class="report-table">
+                    <thead><tr><th>Book Title</th><th>Checkout Date</th><th>Due Date</th><th>Return Date</th><th>Status</th><th>Fine</th></tr></thead>
+                    <tbody>`;
+            
+            patronTransactions.forEach(t => {
+                const fine = calculateFine(t.dueDate, t.returnDate);
+                html += `<tr>
+                    <td>${t.bookTitle}</td>
+                    <td>${t.checkoutDate}</td>
+                    <td style="${!t.returnDate && new Date(t.dueDate) < new Date() ? 'color:#ef4444;' : ''}">${t.dueDate}</td>
+                    <td>${t.returnDate || '-'}</td>
+                    <td><span class="status-badge status-${t.status}">${t.status}</span></td>
+                    <td>${fine > 0 ? `$${fine.toFixed(2)}` : '-'}</td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        function generatePopularBooksReport() {
+            const bookStats = {};
+            filteredTransactions.forEach(t => {
+                if (!bookStats[t.bookTitle]) bookStats[t.bookTitle] = { checkouts: 0, renewals: 0 };
+                bookStats[t.bookTitle].checkouts++;
+                bookStats[t.bookTitle].renewals += t.renewedCount;
+            });
+            
+            const sorted = Object.entries(bookStats).sort((a, b) => b[1].checkouts - a[1].checkouts);
+            
+            let html = `<div class="report-table-container">
+                <table class="report-table">
+                    <thead><tr><th>Rank</th><th>Book Title</th><th>Checkouts</th><th>Renewals</th><th>Popularity Score</th></tr></thead>
+                    <tbody>`;
+            
+            sorted.forEach(([title, stats], index) => {
+                const score = stats.checkouts + (stats.renewals * 0.5);
+                html += `<tr>
+                    <td>#${index + 1}</td>
+                    <td><strong>${title}</strong></td>
+                    <td>${stats.checkouts}</td>
+                    <td>${stats.renewals}</td>
+                    <td><span style="background:var(--primary-light); padding:0.2rem 0.5rem; border-radius:1rem;">${score.toFixed(1)}</span></td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        function generateCategoryStats() {
+            const categoryStats = {};
+            books.forEach(book => {
+                if (!categoryStats[book.category]) {
+                    categoryStats[book.category] = { total: 0, borrowed: 0 };
+                }
+                categoryStats[book.category].total++;
+            });
+            
+            filteredTransactions.filter(t => !t.returnDate).forEach(t => {
+                const book = books.find(b => b.id === t.bookId);
+                if (book && categoryStats[book.category]) {
+                    categoryStats[book.category].borrowed++;
+                }
+            });
+            
+            let html = `<div class="bar-chart">`;
+            for (let category in categoryStats) {
+                const percentage = (categoryStats[category].borrowed / categoryStats[category].total) * 100;
+                html += `
+                    <div class="bar-item">
+                        <div class="bar-label">${category}</div>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: ${percentage}%">${categoryStats[category].borrowed}/${categoryStats[category].total}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            html += `</div>`;
+            return html;
+        }
+
+        function generateFineReport() {
+            const fines = filteredTransactions.map(t => ({
+                book: t.bookTitle,
+                patron: t.patronName,
+                dueDate: t.dueDate,
+                returnDate: t.returnDate,
+                fine: calculateFine(t.dueDate, t.returnDate),
+                paid: t.finePaid
+            })).filter(f => f.fine > 0);
+            
+            const totalUnpaid = fines.filter(f => !f.paid).reduce((sum, f) => sum + f.fine, 0);
+            const totalPaid = fines.filter(f => f.paid).reduce((sum, f) => sum + f.fine, 0);
+            
+            let html = `<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; margin-bottom:1.5rem;">
+                <div class="stat-card"><h4>Collected Fines</h4><div class="number">$${totalPaid.toFixed(2)}</div></div>
+                <div class="stat-card"><h4>Outstanding Fines</h4><div class="number" style="color:#ef4444;">$${totalUnpaid.toFixed(2)}</div></div>
+            </div>
+            <div class="report-table-container">
+                <table class="report-table">
+                    <thead><tr><th>Book</th><th>Patron</th><th>Due Date</th><th>Return Date</th><th>Fine</th><th>Status</th></tr></thead>
+                    <tbody>`;
+            
+            fines.forEach(f => {
+                html += `<tr>
+                    <td>${f.book}</td>
+                    <td>${f.patron}</td>
+                    <td>${f.dueDate}</td>
+                    <td>${f.returnDate || 'Not returned'}<\/td>
+                    <td style="color:#ef4444;">$${f.fine.toFixed(2)}<\/td>
+                    <td>${f.paid ? '✓ Paid' : '⚠️ Unpaid'}<\/td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table></div>`;
+            if (fines.length === 0) html = `<div style="text-align:center; padding:3rem;">No fines recorded</div>`;
+            return html;
+        }
+
+        function generateActivityLog() {
+            let html = `<div class="report-table-container">
+                <table class="report-table">
+                    <thead><tr><th>Date</th><th>Book</th><th>Patron</th><th>Action</th><th>Details</th></tr></thead>
+                    <tbody>`;
+            
+            filteredTransactions.slice().reverse().forEach(t => {
+                html += `<tr>
+                    <td>${t.checkoutDate}</td>
+                    <td>${t.bookTitle}</td>
+                    <td>${t.patronName}</td>
+                    <td>${t.returnDate ? 'Return' : (t.renewedCount > 0 ? 'Renewed' : 'Checked Out')}</td>
+                    <td>${t.returnDate ? `Returned on ${t.returnDate}` : `Due: ${t.dueDate}`}</td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        function generateCharts() {
+            const categoryStats = {};
+            books.forEach(book => {
+                if (!categoryStats[book.category]) categoryStats[book.category] = 0;
+                categoryStats[book.category]++;
+            });
+            
+            let pieSegments = [];
+            Object.entries(categoryStats).forEach(([cat, count]) => {
+                pieSegments.push(`<div class="legend-item"><div class="legend-color" style="background:var(--primary)"></div> ${cat} (${count})</div>`);
+            });
+            
+            return `
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h4>📊 Category Distribution</h4>
+                        <div class="pie-chart">
+                            <div class="simple-pie"></div>
+                        </div>
+                        <div class="legend">
+                            ${pieSegments.join('')}
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h4>📈 Monthly Circulation Trend</h4>
+                        <div class="bar-chart" id="trendChart"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function refreshReport() {
+            let content = '';
+            switch(currentReport) {
+                case 'overdue': content = generateOverdueReport(); break;
+                case 'circulation': content = generateCirculationReport(); break;
+                case 'patronHistory': content = generatePatronHistoryReport(); break;
+                case 'popularBooks': content = generatePopularBooksReport(); break;
+                case 'categoryStats': content = generateCategoryStats(); break;
+                case 'fineReport': content = generateFineReport(); break;
+                case 'activityLog': content = generateActivityLog(); break;
+            }
+            
+            document.getElementById('reportContent').innerHTML = content;
+            document.getElementById('chartsSection').innerHTML = generateCharts();
+        }
+
+        function switchReport(report, element) {
+            currentReport = report;
+            document.querySelectorAll('.report-tab').forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+            
+            const patronFilter = document.getElementById('patronFilter');
+            patronFilter.style.display = report === 'patronHistory' ? 'block' : 'none';
+            
+            if (report === 'patronHistory') {
+                const patronSelect = document.getElementById('patronSelect');
+                patronSelect.innerHTML = '<option value="all">All Patrons</option>' + 
+                    patrons.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            }
+            
+            applyDateFilter();
+        }
+
+        function exportToCSV() {
+            const reportContentEl = document.getElementById('reportContent');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = reportContentEl.innerHTML;
+            const text = tempDiv.innerText;
+            const blob = new Blob([text], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentReport}_report_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`Report exported as CSV`, false);
+        }
+
+        function printReport() { window.print(); }
+        function saveAsPDF() { showToast("Use browser's 'Save as PDF' from print dialog", false); window.print(); }
+        function refreshAllData() { applyDateFilter(); updateStats(); showToast("Data refreshed", false); }
+
+        // Initialize
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        document.getElementById('fromDate').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('toDate').value = today.toISOString().split('T')[0];
+        
+        updateStats();
+        refreshReport();
+
+        // Make functions globally accessible
+        window.switchReport = switchReport;
+        window.applyFilters = applyFilters;
+        window.exportToCSV = exportToCSV;
+        window.printReport = printReport;
+        window.saveAsPDF = saveAsPDF;
+        window.refreshAllData = refreshAllData;
+    </script>
+</body>
+</html>
