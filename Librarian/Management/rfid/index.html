@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFID Library | RFID Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #93c5fd;
+            --primary-bg: #eff6ff;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fed7aa;
+            --info: #0ea5e9;
+            --info-light: #e0f2fe;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--gray-50);
+            padding: 0;
+            margin: 0;
+        }
+
+        .rfid-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-card h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--white);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Quick Search Bar - NEW */
+        .quick-search-bar {
+            background: linear-gradient(135deg, var(--primary-bg) 0%, #f0f9ff 100%);
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            border: 2px solid var(--primary-light);
+        }
+
+        .quick-search-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .quick-search-header span {
+            font-size: 1.2rem;
+        }
+
+        .quick-search-header strong {
+            color: var(--primary-dark);
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .search-input-group {
+            flex: 2;
+            min-width: 250px;
+        }
+
+        .search-input-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gray-600);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .search-input-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            font-family: monospace;
+            background: white;
+        }
+
+        .search-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .search-result-card {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.75rem;
+            border-left: 4px solid var(--primary);
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .search-result-card.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .result-info {
+            flex: 2;
+        }
+
+        .result-tag {
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: var(--primary);
+        }
+
+        .result-detail {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            margin-top: 0.25rem;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .not-found-message {
+            color: var(--danger);
+            text-align: center;
+            padding: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-outline {
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-sm {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.7rem;
+        }
+
+        /* Form Groups */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gray-600);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .data-table th {
+            background: var(--gray-50);
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .data-table tr.highlight {
+            background: var(--primary-bg);
+            animation: pulse 1s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { background: var(--primary-bg); }
+            50% { background: var(--primary-light); }
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .badge-active { background: var(--success-light); color: #065f46; }
+        .badge-inactive { background: var(--danger-light); color: #991b1b; }
+        .badge-warning { background: var(--warning-light); color: #9a3412; }
+
+        /* RFID Card Display */
+        .rfid-card-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            text-align: center;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+
+        .rfid-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+
+        /* Scanner Simulation */
+        .scanner-simulator {
+            background: var(--gray-800);
+            color: #10b981;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 1rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--gray-800);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+            z-index: 1100;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="rfid-container">
+        <!-- Statistics Overview -->
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <!-- RFID Tags Inventory with Quick Search -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <span>🏷️</span> RFID Tags Inventory
+                </div>
+                <button class="btn btn-primary" onclick="openIssueRFIDModal()">
+                    + Issue New RFID Tag
+                </button>
+            </div>
+
+            <!-- QUICK SEARCH / SCAN BAR - NEW -->
+            <div class="quick-search-bar">
+                <div class="quick-search-header">
+                    <span>🔍</span>
+                    <strong>Quick Find - Scan or Type RFID Number</strong>
+                </div>
+                <div class="search-input-wrapper">
+                    <div class="search-input-group">
+                        <label>📡 Scan / Enter RFID Number</label>
+                        <input type="text" id="quickRfidSearch" placeholder="Scan RFID tag or type number here..." autocomplete="off">
+                    </div>
+                    <button class="btn btn-primary" onclick="searchRfidTag()">🔍 Search</button>
+                    <button class="btn btn-outline" onclick="clearSearch()">✕ Clear</button>
+                </div>
+                
+                <!-- Search Result Display -->
+                <div id="quickSearchResult" class="search-result-card">
+                    <!-- Dynamic content will appear here -->
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table" id="rfidTagsTable">
+                    <thead>
+                        <tr>
+                            <th>RFID Number</th>
+                            <th>Assigned To</th>
+                            <th>Type</th>
+                            <th>Security Bit</th>
+                            <th>Date Issued</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rfidTagsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RFID Reader Simulator -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <span>🔍</span> RFID Reader Simulator
+                </div>
+                <button class="btn btn-outline" onclick="initializeReader()">
+                    🔄 Initialize Reader
+                </button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Scan RFID Tag</label>
+                    <input type="text" id="rfidScannerInput" placeholder="Place RFID tag near reader..." autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Reader Status</label>
+                    <div class="scanner-simulator" id="readerStatus">
+                        🟡 Reader Offline - Click Initialize
+                    </div>
+                </div>
+            </div>
+            <div id="scannedTagInfo" style="margin-top: 1rem; display: none;">
+                <div class="rfid-card-preview">
+                    <div>📡 SCANNED RFID TAG</div>
+                    <div class="rfid-number" id="scannedRfidNumber">RFID-XXX-XXX</div>
+                    <div id="scannedTagDetails"></div>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Security Action</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-success" onclick="activateSecurityBit()">🔒 Activate Security Bit</button>
+                        <button class="btn btn-warning" onclick="deactivateSecurityBit()">🔓 Deactivate Security Bit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multiple Tags Scanner -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <span>📚</span> Batch Scanner (Multiple Tags)
+                </div>
+                <button class="btn btn-primary" onclick="startBatchScan()">
+                    🔍 Start Batch Scan
+                </button>
+            </div>
+            <div id="batchScanResults" class="table-container" style="display: none;">
+                <table class="data-table">
+                    <thead><tr><th>RFID Number</th><th>Status</th><th>Security Bit</th></tr></thead>
+                    <tbody id="batchScanBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Issue RFID Modal -->
+    <div id="rfidModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Issue New RFID Tag</h3>
+                <button class="close-modal" onclick="closeModal('rfidModal')">&times;</button>
+            </div>
+            <div id="rfidModalBody">
+                <form id="issueRfidForm">
+                    <div class="form-group">
+                        <label>Tag Type</label>
+                        <select id="tagType" required>
+                            <option value="Patron">Patron Card</option>
+                            <option value="Book">Book Tag</option>
+                            <option value="Equipment">Equipment Tag</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Assign To (ID)</label>
+                        <input type="text" id="assignToId" placeholder="Patron ID or Book ID" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Assign To Name</label>
+                        <input type="text" id="assignToName" placeholder="Name of person/book" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Issue RFID Tag</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Write RFID Modal -->
+    <div id="writeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Write RFID Tag</h3>
+                <button class="close-modal" onclick="closeModal('writeModal')">&times;</button>
+            </div>
+            <div id="writeModalBody">
+                <form id="writeRfidForm">
+                    <div class="form-group">
+                        <label>Target RFID</label>
+                        <input type="text" id="writeTargetRfid" readonly style="background:var(--gray-100);">
+                    </div>
+                    <div class="form-group">
+                        <label>Data to Write</label>
+                        <textarea id="writeData" rows="4" placeholder="Enter data to write to RFID tag..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Write to Tag</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // RFID Tags Database
+        let rfidTags = [
+            { id: "RFID-CARD-001", assignedToId: "PAT-1001", assignedToName: "Alice Henderson", type: "Patron", securityBit: true, dateIssued: "2025-01-15" },
+            { id: "RFID-CARD-002", assignedToId: "PAT-1002", assignedToName: "Markus Wright", type: "Patron", securityBit: true, dateIssued: "2025-03-20" },
+            { id: "RFID-BK001", assignedToId: "BK-202", assignedToName: "Data Structures & Algorithms", type: "Book", securityBit: true, dateIssued: "2025-01-10" },
+            { id: "RFID-BK002", assignedToId: "BK-505", assignedToName: "Modern Artificial Intelligence", type: "Book", securityBit: false, dateIssued: "2025-02-01" },
+            { id: "RFID-BK003", assignedToId: "BK-101", assignedToName: "The Pragmatic Programmer", type: "Book", securityBit: true, dateIssued: "2025-04-01" },
+            { id: "RFID-BK004", assignedToId: "BK-777", assignedToName: "Cloud Computing Essentials", type: "Book", securityBit: true, dateIssued: "2025-04-10" },
+            { id: "RFID-EQ001", assignedToId: "SCAN-001", assignedToName: "Scanner Device", type: "Equipment", securityBit: true, dateIssued: "2025-03-01" }
+        ];
+
+        let readerInitialized = false;
+        let lastScannedTag = null;
+        let batchScanActive = false;
+        let currentHighlightedRow = null;
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function updateStats() {
+            const totalTags = rfidTags.length;
+            const activeSecurity = rfidTags.filter(t => t.securityBit).length;
+            const patronTags = rfidTags.filter(t => t.type === 'Patron').length;
+            const bookTags = rfidTags.filter(t => t.type === 'Book').length;
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card"><h4>Total RFID Tags</h4><div class="number">${totalTags}</div></div>
+                <div class="stat-card"><h4>Active Security Bits</h4><div class="number">${activeSecurity}</div></div>
+                <div class="stat-card"><h4>Patron Cards</h4><div class="number">${patronTags}</div></div>
+                <div class="stat-card"><h4>Book Tags</h4><div class="number">${bookTags}</div></div>
+            `;
+        }
+
+        function renderRfidTagsTable(highlightRfid = null) {
+            const tbody = document.getElementById('rfidTagsBody');
+            tbody.innerHTML = rfidTags.map(tag => `
+                <tr id="row-${tag.id.replace(/[^a-zA-Z0-9]/g, '')}" data-rfid="${tag.id}">
+                    <td><code>${tag.id}</code></td>
+                    <td><strong>${escapeHtml(tag.assignedToName)}</strong><br><small>${tag.assignedToId}</small></td>
+                    <td><span class="badge ${tag.type === 'Patron' ? 'badge-active' : tag.type === 'Book' ? 'badge-warning' : 'badge-active'}">${tag.type}</span></td>
+                    <td><span class="badge ${tag.securityBit ? 'badge-active' : 'badge-inactive'}">${tag.securityBit ? 'Active' : 'Inactive'}</span></td>
+                    <td>${tag.dateIssued}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="toggleSecurityBit('${tag.id}')">🔒 Toggle Bit</button>
+                        <button class="btn btn-primary btn-sm" onclick="openWriteModal('${tag.id}')">✍️ Write</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            if (highlightRfid) {
+                const rowId = `row-${highlightRfid.replace(/[^a-zA-Z0-9]/g, '')}`;
+                const row = document.getElementById(rowId);
+                if (row) {
+                    if (currentHighlightedRow) {
+                        currentHighlightedRow.classList.remove('highlight');
+                    }
+                    row.classList.add('highlight');
+                    currentHighlightedRow = row;
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+            });
+        }
+
+        // NEW: Quick Search Function
+        function searchRfidTag() {
+            const searchValue = document.getElementById('quickRfidSearch').value.trim();
+            if (!searchValue) {
+                showToast('Please enter or scan an RFID number', true);
+                return;
+            }
+            
+            const foundTag = rfidTags.find(tag => 
+                tag.id.toLowerCase().includes(searchValue.toLowerCase()) ||
+                tag.assignedToName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                tag.assignedToId.toLowerCase().includes(searchValue.toLowerCase())
+            );
+            
+            const resultDiv = document.getElementById('quickSearchResult');
+            
+            if (foundTag) {
+                resultDiv.innerHTML = `
+                    <div class="result-row">
+                        <div class="result-info">
+                            <div class="result-tag">🏷️ ${foundTag.id}</div>
+                            <div class="result-detail">📌 Type: ${foundTag.type} | 👤 Assigned to: ${foundTag.assignedToName} (${foundTag.assignedToId})</div>
+                            <div class="result-detail">🔒 Security: ${foundTag.securityBit ? 'ACTIVE ✓' : 'INACTIVE ⚠️'} | 📅 Issued: ${foundTag.dateIssued}</div>
+                        </div>
+                        <div class="result-actions">
+                            <button class="btn btn-success btn-sm" onclick="toggleSecurityBit('${foundTag.id}')">🔒 Toggle Bit</button>
+                            <button class="btn btn-primary btn-sm" onclick="openWriteModal('${foundTag.id}')">✍️ Write</button>
+                            <button class="btn btn-outline btn-sm" onclick="locateInTable('${foundTag.id}')">📍 Locate</button>
+                        </div>
+                    </div>
+                `;
+                resultDiv.classList.add('show');
+                showToast(`✅ Found: ${foundTag.id} - ${foundTag.assignedToName}`);
+                renderRfidTagsTable(foundTag.id);
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="not-found-message">
+                        ❌ No RFID tag found matching "${escapeHtml(searchValue)}"
+                        <br><small>Try scanning again or check if the tag is registered</small>
+                    </div>
+                `;
+                resultDiv.classList.add('show');
+                showToast(`❌ No tag found for: ${searchValue}`, true);
+            }
+        }
+
+        // Locate and highlight tag in table
+        window.locateInTable = (rfidId) => {
+            renderRfidTagsTable(rfidId);
+            showToast(`📍 Located ${rfidId} in inventory`);
+        };
+
+        function clearSearch() {
+            document.getElementById('quickRfidSearch').value = '';
+            document.getElementById('quickSearchResult').classList.remove('show');
+            document.getElementById('quickSearchResult').innerHTML = '';
+            if (currentHighlightedRow) {
+                currentHighlightedRow.classList.remove('highlight');
+                currentHighlightedRow = null;
+            }
+            renderRfidTagsTable();
+            showToast('Search cleared');
+        }
+
+        window.toggleSecurityBit = (rfidId) => {
+            const tag = rfidTags.find(t => t.id === rfidId);
+            if (tag) {
+                tag.securityBit = !tag.securityBit;
+                renderRfidTagsTable();
+                updateStats();
+                showToast(`Security bit ${tag.securityBit ? 'activated' : 'deactivated'} for ${tag.id}`);
+                
+                // Update search result if it's showing this tag
+                const searchValue = document.getElementById('quickRfidSearch').value;
+                if (searchValue && searchValue === tag.id) {
+                    searchRfidTag();
+                }
+            }
+        };
+
+        window.initializeReader = () => {
+            readerInitialized = true;
+            document.getElementById('readerStatus').innerHTML = '🟢 Reader Initialized - Ready to scan';
+            document.getElementById('readerStatus').style.background = '#064e3b';
+            showToast('RFID Reader initialized successfully');
+        };
+
+        function setupScannerListener() {
+            const scannerInput = document.getElementById('rfidScannerInput');
+            scannerInput.addEventListener('change', function() {
+                if (!readerInitialized) {
+                    showToast('Please initialize reader first', true);
+                    this.value = '';
+                    return;
+                }
+                
+                const scannedId = this.value.trim();
+                if (scannedId) {
+                    processScannedTag(scannedId);
+                    this.value = '';
+                }
+            });
+        }
+
+        // Setup quick search for RFID scanning (auto-search when pasted/scanned)
+        function setupQuickSearchListener() {
+            const quickSearch = document.getElementById('quickRfidSearch');
+            quickSearch.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchRfidTag();
+                }
+            });
+        }
+
+        function processScannedTag(rfidId) {
+            const tag = rfidTags.find(t => t.id === rfidId);
+            const scannedInfo = document.getElementById('scannedTagInfo');
+            const scannedNumber = document.getElementById('scannedRfidNumber');
+            const scannedDetails = document.getElementById('scannedTagDetails');
+            
+            if (tag) {
+                lastScannedTag = tag;
+                scannedNumber.textContent = tag.id;
+                scannedDetails.innerHTML = `
+                    <div>📌 Type: ${tag.type}</div>
+                    <div>👤 Assigned: ${escapeHtml(tag.assignedToName)}</div>
+                    <div>🔒 Security: ${tag.securityBit ? 'ACTIVE ✓' : 'INACTIVE ⚠️'}</div>
+                `;
+                document.getElementById('readerStatus').innerHTML = `✅ Tag scanned: ${tag.id} - ${tag.assignedToName}`;
+                showToast(`Tag scanned: ${tag.id} - ${tag.assignedToName}`);
+                
+                // Also auto-populate quick search
+                document.getElementById('quickRfidSearch').value = tag.id;
+                searchRfidTag();
+            } else {
+                scannedNumber.textContent = rfidId;
+                scannedDetails.innerHTML = `<div>⚠️ Unknown RFID Tag</div><div>This tag is not registered in the system</div>`;
+                showToast(`Unknown RFID tag: ${rfidId}`, true);
+                lastScannedTag = null;
+            }
+            scannedInfo.style.display = 'block';
+        }
+
+        window.activateSecurityBit = () => {
+            if (lastScannedTag) {
+                lastScannedTag.securityBit = true;
+                renderRfidTagsTable();
+                updateStats();
+                processScannedTag(lastScannedTag.id);
+                showToast(`Security bit ACTIVATED for ${lastScannedTag.id}`);
+            } else {
+                showToast('No tag scanned', true);
+            }
+        };
+
+        window.deactivateSecurityBit = () => {
+            if (lastScannedTag) {
+                lastScannedTag.securityBit = false;
+                renderRfidTagsTable();
+                updateStats();
+                processScannedTag(lastScannedTag.id);
+                showToast(`Security bit DEACTIVATED for ${lastScannedTag.id}`);
+            } else {
+                showToast('No tag scanned', true);
+            }
+        };
+
+        window.startBatchScan = () => {
+            batchScanActive = true;
+            const batchBody = document.getElementById('batchScanBody');
+            const mockBatch = rfidTags.slice(0, 5);
+            
+            batchBody.innerHTML = mockBatch.map(tag => `
+                <tr>
+                    <td><code>${tag.id}</code></td>
+                    <td><span class="badge badge-active">Detected</span></td>
+                    <td><span class="badge ${tag.securityBit ? 'badge-active' : 'badge-inactive'}">${tag.securityBit ? 'Active' : 'Inactive'}</span></td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('batchScanResults').style.display = 'block';
+            showToast(`Batch scan completed - ${mockBatch.length} tags detected`);
+            
+            setTimeout(() => {
+                batchScanActive = false;
+            }, 5000);
+        };
+
+        window.openIssueRFIDModal = () => {
+            document.getElementById('rfidModal').classList.add('active');
+        };
+
+        window.openWriteModal = (rfidId) => {
+            document.getElementById('writeTargetRfid').value = rfidId;
+            document.getElementById('writeModal').classList.add('active');
+        };
+
+        document.getElementById('issueRfidForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const type = document.getElementById('tagType').value;
+            const assignToId = document.getElementById('assignToId').value;
+            const assignToName = document.getElementById('assignToName').value;
+            
+            const typePrefix = type === 'Patron' ? 'CARD' : (type === 'Book' ? 'BK' : 'EQ');
+            const newRfid = {
+                id: `RFID-${typePrefix}-${String(rfidTags.length + 1).padStart(3, '0')}`,
+                assignedToId: assignToId,
+                assignedToName: assignToName,
+                type: type,
+                securityBit: true,
+                dateIssued: new Date().toISOString().split('T')[0]
+            };
+            
+            rfidTags.push(newRfid);
+            renderRfidTagsTable();
+            updateStats();
+            closeModal('rfidModal');
+            document.getElementById('issueRfidForm').reset();
+            showToast(`RFID Tag ${newRfid.id} issued to ${assignToName}`);
+        });
+
+        document.getElementById('writeRfidForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const targetRfid = document.getElementById('writeTargetRfid').value;
+            const writeData = document.getElementById('writeData').value;
+            
+            if (writeData) {
+                showToast(`Data written to ${targetRfid}`);
+                closeModal('writeModal');
+                document.getElementById('writeData').value = '';
+            } else {
+                showToast('Please enter data to write', true);
+            }
+        });
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Initialize
+        updateStats();
+        renderRfidTagsTable();
+        setupScannerListener();
+        setupQuickSearchListener();
+
+        window.closeModal = closeModal;
+        window.initializeReader = initializeReader;
+        window.startBatchScan = startBatchScan;
+        window.activateSecurityBit = activateSecurityBit;
+        window.deactivateSecurityBit = deactivateSecurityBit;
+        window.toggleSecurityBit = toggleSecurityBit;
+        window.openIssueRFIDModal = openIssueRFIDModal;
+        window.openWriteModal = openWriteModal;
+        window.searchRfidTag = searchRfidTag;
+        window.clearSearch = clearSearch;
+        window.locateInTable = locateInTable;
+    </script>
+</body>
+</html>
