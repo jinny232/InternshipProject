@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 2.5rem; background: #f8fafc; }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .search-box { padding: 12px; width: 350px; border-radius: 10px; border: 1px solid #e2e8f0; outline: none; }
+        .add-btn { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; border: 1px solid #e2e8f0; }
+        th { text-align: left; background: #f8fafc; padding: 15px; color: #64748b; font-size: 0.8rem; text-transform: uppercase; }
+        td { padding: 15px; border-top: 1px solid #f1f5f9; }
+    </style>
+</head>
+<body>
+    <div class="header-actions">
+        <div>
+            <h1>Sub-Admin Management</h1>
+            <p style="color: #64748b">Manage staff access levels</p>
+        </div>
+        <button class="add-btn">+ Add New Admin</button>
+    </div>
+
+    <input type="text" class="search-box" placeholder="Search by name or ID...">
+
+    <table style="margin-top: 20px;">
+        <thead>
+            <tr>
+                <th>Admin Name</th>
+                <th>Staff ID</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Hein Htet</strong></td>
+                <td>STF-9021</td>
+                <td>Assistant Librarian</td>
+                <td><span style="color: green;">● Active</span></td>
+                <td><button style="border:none; background:none; cursor:pointer;">⚙️ Edit</button></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
