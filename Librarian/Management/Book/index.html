@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Inventory Hub | Library Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --card: #ffffff;
+            --status-avail: #dcfce7;
+            --status-avail-text: #15803d;
+            --status-borrowed: #fef9c3;
+            --status-borrowed-text: #a16207;
+            --status-archived: #f1f5f9;
+            --status-archived-text: #64748b;
+            --status-lost: #fee2e2;
+            --status-lost-text: #b91c1c;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; }
+
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .btn-acquire { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; transition: transform 0.2s, background 0.2s; }
+        .btn-acquire:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+        .filter-container {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            margin-bottom: 1rem;
+        }
+        .search-box { flex: 1; min-width: 180px; padding: 10px 15px; border: 1px solid var(--border); border-radius: 8px; outline: none; }
+        .filter-select { padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: #fff; min-width: 140px; cursor: pointer; }
+        .btn-apply { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+        .chart-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 2rem; }
+        .chart-card { background: var(--card); padding: 1rem; border-radius: 12px; border: 1px solid var(--border); height: 260px; }
+        .chart-title { font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 10px; text-align: center; text-transform: uppercase; }
+
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+        th { text-align: left; background: #f8fafc; padding: 15px; font-size: 0.8rem; color: #64748b; text-transform: uppercase; }
+        td { padding: 15px; border-top: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
+        
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .status-available { background: var(--status-avail); color: var(--status-avail-text); }
+        .status-borrowed { background: var(--status-borrowed); color: var(--status-borrowed-text); }
+        .status-archived { background: var(--status-archived); color: var(--status-archived-text); }
+        .status-lost { background: var(--status-lost); color: var(--status-lost-text); }
+
+        .author-sub { font-size: 0.8rem; color: #64748b; display: block; }
+        .action-link { color: var(--primary); text-decoration: none; font-weight: 600; margin-right: 12px; cursor: pointer; }
+        .btn-archive { color: #ef4444; background: none; border: none; cursor: pointer; font-weight: 600; font-family: inherit; }
+        .empty-row td { text-align: center; padding: 40px; color: #94a3b8; }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-actions">
+    <h1>📚 Book Inventory </h1>
+    <a href="acquire.html" class="btn-acquire">+ Add New Book</a>
+</div>
+
+<div class="filter-container">
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search title, author, or Call No...">
+    <select id="categoryFilter" class="filter-select">
+        <option value="all">All Categories</option>
+        <option value="Fiction">Fiction</option>
+        <option value="Non-Fiction">Non-Fiction</option>
+        <option value="Novels">Novels</option>
+        <option value="Comic/ Journal">Comic/ Journal</option>
+        <option value="Magazine/ CD, DVD">Magazine/ CD, DVD</option>
+        <option value="Newspapers">Newspapers</option>
+        <option value="e-Book">e-Book</option>
+    </select>
+    <select id="statusFilter" class="filter-select">
+        <option value="all">All Status</option>
+        <option value="Available">Available</option>
+        <option value="Borrowed">Borrowed</option>
+        <option value="Archived">Archived</option>
+        <option value="Lost">Lost</option>
+    </select>
+    <button id="applyFiltersBtn" class="btn-apply">Apply Filters</button>
+</div>
+
+<div class="chart-section">
+    <div class="chart-card">
+        <div class="chart-title">📊 Books by Category</div>
+        <canvas id="categoryChart"></canvas>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title">📈 Inventory Status Breakdown</div>
+        <canvas id="statusChart"></canvas>
+    </div>
+</div>
+
+<table id="inventoryTable">
+    <thead>
+        <tr><th># No.</th><th>Title & Author</th><th>Category</th><th>Call No</th><th>Status</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+</table>
+
+<script>
+    // ----- BOOK DATABASE (localStorage + seed) -----
+    let booksDatabase = [];
+
+    function generateBookId() { return 'BK-' + Date.now() + '-' + Math.floor(Math.random() * 1000); }
+    function generateCallNumber(category, id) {
+        const prefix = category ? category.substring(0, 3).toUpperCase() : 'GEN';
+        return `${prefix}-${id.slice(-6)}`;
+    }
+
+    const defaultBooks = [
+        { id: "book-1", bookId: "BK-001", title: "The Pragmatic Programmer", author: "Andrew Hunt", category: "Non-Fiction", callNo: "005.1-A01", status: "Available", isArchived: false, isbn: "9780201616224", publisher: "Addison-Wesley", edition: "2nd", publicationYear: "1999", language: "English", pages: "352", description: "A classic guide to software development best practices." },
+        { id: "book-2", bookId: "BK-002", title: "Digital Fortress", author: "Dan Brown", category: "Fiction", callNo: "FIC-DB-02", status: "Borrowed", isArchived: false, isbn: "9780312944926", publisher: "St. Martin's Press", edition: "1st", publicationYear: "1998", language: "English", pages: "384", description: "A thriller about cryptography and national security." },
+        { id: "book-3", bookId: "BK-003", title: "The Great Gatsby", author: "F. Scott Fitzgerald", category: "Fiction", callNo: "FIC-GATS-01", status: "Lost", isArchived: false, isbn: "9780743273565", publisher: "Scribner", edition: "1st", publicationYear: "1925", language: "English", pages: "180", description: "A story of wealth and tragedy in the Jazz Age." },
+        { id: "book-4", bookId: "BK-004", title: "Clean Code", author: "Robert C. Martin", category: "Non-Fiction", callNo: "005.1-CC42", status: "Available", isArchived: false, isbn: "9780132350884", publisher: "Prentice Hall", edition: "1st", publicationYear: "2008", language: "English", pages: "464", description: "Handbook of agile software craftsmanship." }
+    ];
+
+    function loadBooksFromStorage() {
+        const stored = localStorage.getItem('lms_books_inventory');
+        if (stored) { booksDatabase = JSON.parse(stored); }
+        else { booksDatabase = JSON.parse(JSON.stringify(defaultBooks)); saveBooksToStorage(); }
+    }
+    function saveBooksToStorage() { localStorage.setItem('lms_books_inventory', JSON.stringify(booksDatabase)); }
+
+    // Check for newly acquired book from acquire.html
+    function checkForNewlyAcquiredBook() {
+        const pendingBook = sessionStorage.getItem('pending_new_book');
+        if (pendingBook) {
+            try {
+                const newBookData = JSON.parse(pendingBook);
+                const exists = booksDatabase.some(b => b.title === newBookData.title && b.author === newBookData.author);
+                if (!exists) {
+                    const newId = generateBookId();
+                    const newBook = {
+                        id: `book-${Date.now()}`,
+                        bookId: newId,
+                        title: newBookData.title,
+                        author: newBookData.author,
+                        category: newBookData.category || "Uncategorized",
+                        callNo: generateCallNumber(newBookData.category || "GEN", newId),
+                        status: "Available",
+                        isArchived: false,
+                        publicationYear: newBookData.publicationYear || "",
+                        edition: newBookData.edition || "",
+                        language: newBookData.language || "",
+                        publisher: newBookData.publisher || "",
+                        isbn: "",
+                        pages: "",
+                        description: ""
+                    };
+                    booksDatabase.unshift(newBook);
+                    saveBooksToStorage();
+                    showToast(`✨ "${newBookData.title}" added to inventory!`);
+                } else { showToast(`⚠️ "${newBookData.title}" already exists.`, true); }
+                sessionStorage.removeItem('pending_new_book');
+            } catch(e) { console.warn(e); }
+        }
+    }
+
+    // Check for full catalogue save from catalogue.html
+    function checkForCatalogueSave() {
+        const savedCatalogue = sessionStorage.getItem('catalogue_complete_book');
+        if (savedCatalogue) {
+            try {
+                const fullBook = JSON.parse(savedCatalogue);
+                const newId = generateBookId();
+                const newBook = {
+                    id: `book-${Date.now()}`,
+                    bookId: newId,
+                    title: fullBook.title || "Untitled",
+                    author: fullBook.author || "Unknown",
+                    category: fullBook.category || "Uncategorized",
+                    callNo: generateCallNumber(fullBook.category || "GEN", newId),
+                    status: fullBook.status || "Available",
+                    isArchived: false,
+                    isbn: fullBook.isbn || "",
+                    publisher: fullBook.publisher || "",
+                    edition: fullBook.edition || "",
+                    publicationYear: fullBook.publicationYear || "",
+                    language: fullBook.language || "",
+                    pages: fullBook.numPages || "",
+                    description: fullBook.summary || "",
+                    rfid_no: fullBook.rfid_no || "",
+                    translator: fullBook.translator || "",
+                    editor: fullBook.editor || "",
+                    price: fullBook.price || "",
+                    currency: fullBook.currency || "MMK"
+                };
+                const exists = booksDatabase.some(b => b.title === newBook.title && b.author === newBook.author);
+                if (!exists) {
+                    booksDatabase.unshift(newBook);
+                    saveBooksToStorage();
+                    showToast(`✅ Catalogued: "${newBook.title}" fully added.`);
+                } else { showToast(`⚠️ Book already exists.`, true); }
+                sessionStorage.removeItem('catalogue_complete_book');
+            } catch(e) { console.warn(e); }
+            renderInventoryTable();
+        }
+    }
+
+    let currentCategoryChart, currentStatusChart;
+
+    function renderInventoryTable() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const categoryVal = document.getElementById('categoryFilter').value;
+        const statusVal = document.getElementById('statusFilter').value;
+        let filteredBooks = booksDatabase.filter(book => !book.isArchived);
+        if (searchTerm) {
+            filteredBooks = filteredBooks.filter(book => book.title.toLowerCase().includes(searchTerm) || book.author.toLowerCase().includes(searchTerm) || book.callNo.toLowerCase().includes(searchTerm));
+        }
+        if (categoryVal !== 'all') filteredBooks = filteredBooks.filter(book => book.category === categoryVal);
+        if (statusVal !== 'all') filteredBooks = filteredBooks.filter(book => book.status === statusVal);
+        
+        const tbody = document.getElementById('tableBody');
+        if (!filteredBooks.length) {
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="6">📭 No books match filters. Try adding new books!</td></tr>`;
+            updateCharts([]);
+            return;
+        }
+        let html = '';
+        filteredBooks.forEach((book, idx) => {
+            let statusClass = book.status === 'Available' ? 'status-available' : (book.status === 'Borrowed' ? 'status-borrowed' : (book.status === 'Archived' ? 'status-archived' : 'status-lost'));
+            html += `<tr data-book-id="${book.id}">
+                <td>${idx + 1}</td>
+                <td><strong>${escapeHtml(book.title)}</strong><span class="author-sub">${escapeHtml(book.author)}</span></td>
+                <td class="cat-cell">${escapeHtml(book.category)}</td>
+                <td>${escapeHtml(book.callNo)}</td>
+                <td><span class="badge ${statusClass}">${book.status}</span></td>
+                <td>
+                    <a class="action-link" href="view.html?id=${book.id}">View</a>
+                        <a class="action-link" href="../marc/index.html?bookId=${book.id}">MARC</a>
+                    <button class="btn-archive" onclick="archiveBook('${book.id}')">Archive</button>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+        updateCharts(filteredBooks);
+    }
+
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
+
+    function archiveBook(bookId) {
+        if(confirm("Archive this book? It will be hidden from inventory.")) {
+            const idx = booksDatabase.findIndex(b => b.id === bookId);
+            if(idx !== -1) { booksDatabase[idx].isArchived = true; booksDatabase[idx].status = "Archived"; saveBooksToStorage(); renderInventoryTable(); showToast("📦 Book archived."); }
+        }
+    }
+
+    function updateCharts(booksList) {
+        let stats = { Available: 0, Borrowed: 0, Archived: 0, Lost: 0 };
+        let cats = {};
+        booksList.forEach(book => {
+            if(stats[book.status] !== undefined) stats[book.status]++;
+            cats[book.category] = (cats[book.category] || 0) + 1;
+        });
+        const catLabels = Object.keys(cats);
+        const catData = catLabels.map(k => cats[k]);
+        const catCtx = document.getElementById('categoryChart').getContext('2d');
+        if(currentCategoryChart) currentCategoryChart.destroy();
+        currentCategoryChart = new Chart(catCtx, {
+            type: 'bar', data: { labels: catLabels, datasets: [{ data: catData, backgroundColor: '#6366f1', borderRadius: 6 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+        const statCtx = document.getElementById('statusChart').getContext('2d');
+        if(currentStatusChart) currentStatusChart.destroy();
+        currentStatusChart = new Chart(statCtx, {
+            type: 'doughnut', data: { labels: ['Available', 'Borrowed', 'Archived', 'Lost'], datasets: [{ data: [stats.Available, stats.Borrowed, stats.Archived, stats.Lost], backgroundColor: ['#10b981', '#f59e0b', '#94a3b8', '#ef4444'], borderWidth: 0 }] },
+            options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 12 } } } }
+        });
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-msg';
+        toast.style.background = isError ? '#ef4444' : '#1e293b';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Make archiveBook global for onclick
+    window.archiveBook = archiveBook;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadBooksFromStorage();
+        checkForNewlyAcquiredBook();
+        checkForCatalogueSave();
+        renderInventoryTable();
+        document.getElementById('applyFiltersBtn').addEventListener('click', () => renderInventoryTable());
+        document.getElementById('searchInput').addEventListener('keyup', () => renderInventoryTable());
+        document.getElementById('categoryFilter').addEventListener('change', () => renderInventoryTable());
+        document.getElementById('statusFilter').addEventListener('change', () => renderInventoryTable());
+    });
+</script>
+</body>
+</html>
