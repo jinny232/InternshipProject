@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MARC Management | Bibliographic Data</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #93c5fd;
+            --primary-bg: #eff6ff;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fed7aa;
+            --info: #0ea5e9;
+            --info-light: #e0f2fe;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--gray-50);
+            padding: 0;
+            margin: 0;
+        }
+
+        .marc-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-card h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .section-card {
+            background: var(--white);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Quick Search Bar */
+        .quick-search-bar {
+            background: linear-gradient(135deg, var(--primary-bg) 0%, #f0f9ff 100%);
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            border: 2px solid var(--primary-light);
+        }
+
+        .quick-search-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .search-input-group {
+            flex: 2;
+            min-width: 250px;
+        }
+
+        .search-input-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gray-600);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .search-input-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        .search-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .search-result-card {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.75rem;
+            border-left: 4px solid var(--primary);
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .search-result-card.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .result-info {
+            flex: 2;
+        }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .result-detail {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            margin-top: 0.25rem;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .not-found-message {
+            color: var(--danger);
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-outline {
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-sm {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.7rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gray-600);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .data-table th {
+            background: var(--gray-50);
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .data-table tr.highlight {
+            background: var(--primary-bg);
+            animation: pulse 1s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { background: var(--primary-bg); }
+            50% { background: var(--primary-light); }
+        }
+
+        .marc-viewer {
+            background: var(--gray-800);
+            color: #10b981;
+            font-family: 'Courier New', monospace;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: var(--success-light); color: #065f46; }
+        .badge-info { background: var(--info-light); color: #0369a1; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 1rem;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--gray-800);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+            z-index: 1100;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .format-selector {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="marc-container">
+        <!-- Statistics -->
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <!-- MARC Import/Export Section with Quick Search -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <span>📥📤</span> MARC Import / Export
+                </div>
+            </div>
+
+            <!-- QUICK SEARCH / SCAN BAR - REPLACES DROPDOWN -->
+            <div class="quick-search-bar">
+                <div class="quick-search-header">
+                    <span>🔍</span>
+                    <strong>Quick Find Book - Scan ISBN, RFID, Title, or Author</strong>
+                </div>
+                <div class="search-input-wrapper">
+                    <div class="search-input-group">
+                        <label>📡 Scan / Search (ISBN, RFID, Title, Author, Book ID)</label>
+                        <input type="text" id="quickBookSearch" placeholder="Scan ISBN barcode, RFID tag, or type title/author..." autocomplete="off">
+                    </div>
+                    <button class="btn btn-primary" onclick="searchBook()">🔍 Search</button>
+                    <button class="btn btn-outline" onclick="clearBookSearch()">✕ Clear</button>
+                </div>
+                
+                <!-- Search Result Display -->
+                <div id="quickSearchResult" class="search-result-card">
+                    <!-- Dynamic content will appear here -->
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label>MARC Format</label>
+                <div class="format-selector">
+                    <select id="marcFormat" style="flex: 1;">
+                        <option value="marc21">MARC21 (Text) - .mrc</option>
+                        <option value="marcxml">MARCXML - .xml</option>
+                        <option value="json">JSON - .json</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="exportMARC()">📤 Export Selected Book</button>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label>Import MARC File</label>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <input type="file" id="marcFileInput" accept=".xml,.mrc,.json,.marc" style="flex: 2;">
+                    <button class="btn btn-success" onclick="importMARC()">📥 Import MARC Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MARC Preview -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <span>👁️</span> MARC Record Preview
+                </div>
+                <button class="btn btn-outline" onclick="copyMARCPreview()">📋 Copy to Clipboard</button>
+            </div>
+            <div id="marcPreview" class="marc-viewer">
+                Search for a book above or select a record below to preview MARC data...
+            </div>
+        </div>
+
+        <!-- MARC Records Database -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <span>📚</span> MARC Records Database
+                </div>
+                <button class="btn btn-primary" onclick="openCreateMARCRecord()">+ Create MARC Record</button>
+            </div>
+            <div class="table-container">
+                <table class="data-table" id="marcRecordsTable">
+                    <thead>
+                        <tr>
+                            <th>Record ID</th>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>ISBN</th>
+                            <th>Format</th>
+                            <th>Last Modified</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="marcRecordsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create MARC Record Modal -->
+    <div id="marcRecordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create MARC Record</h3>
+                <button class="close-modal" onclick="closeModal('marcRecordModal')">&times;</button>
+            </div>
+            <div id="marcRecordModalBody">
+                <form id="marcRecordForm">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="marcTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Author (100 field)</label>
+                        <input type="text" id="marcAuthor" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ISBN (010 field)</label>
+                        <input type="text" id="marcISBN">
+                    </div>
+                    <div class="form-group">
+                        <label>Publisher (260 field)</label>
+                        <input type="text" id="marcPublisher">
+                    </div>
+                    <div class="form-group">
+                        <label>Publication Year</label>
+                        <input type="number" id="marcYear">
+                    </div>
+                    <div class="form-group">
+                        <label>Physical Description (300 field)</label>
+                        <input type="text" id="marcPages" placeholder="e.g., 352 p.">
+                    </div>
+                    <div class="form-group">
+                        <label>Subject (650 field)</label>
+                        <input type="text" id="marcSubject">
+                    </div>
+                    <div class="form-group">
+                        <label>Call Number (852 field)</label>
+                        <input type="text" id="marcCallNo">
+                    </div>
+                    <div class="form-group">
+                        <label>Leader (LDR)</label>
+                        <input type="text" id="marcLeader" value="00000nam a2200000 a 4500">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Create MARC Record</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Books Database (expanded for demo - simulates many books)
+        let books = [
+            { id: "BK-202", title: "Data Structures & Algorithms", author: "Thomas Cormen", isbn: "9780262033848", publisher: "MIT Press", year: 2022, pages: "1312 p.", category: "Computer Science", callNo: "QA76.9.D35 C67", rfid: "RFID-BK001" },
+            { id: "BK-505", title: "Modern Artificial Intelligence", author: "Stuart Russell", isbn: "9780136042594", publisher: "Pearson", year: 2021, pages: "1152 p.", category: "AI", callNo: "Q335 .R86", rfid: "RFID-BK002" },
+            { id: "BK-101", title: "The Pragmatic Programmer", author: "David Thomas", isbn: "9780201616224", publisher: "Addison-Wesley", year: 2019, pages: "352 p.", category: "Programming", callNo: "QA76.76.D47 T46", rfid: "RFID-BK003" },
+            { id: "BK-777", title: "Cloud Computing Essentials", author: "Michael Smith", isbn: "9781234567890", publisher: "Tech Press", year: 2023, pages: "480 p.", category: "Cloud Computing", callNo: "QA76.585 .S65", rfid: "RFID-BK004" },
+            { id: "BK-888", title: "Cybersecurity Fundamentals", author: "Kevin Mitnick", isbn: "9780987654321", publisher: "Security Pub", year: 2022, pages: "520 p.", category: "Security", callNo: "QA76.9.A25 M58", rfid: "RFID-BK005" },
+            { id: "BK-999", title: "Machine Learning in Practice", author: "Andrew Ng", isbn: "9781122334455", publisher: "ML Press", year: 2023, pages: "620 p.", category: "AI/ML", callNo: "Q325.5 .N4", rfid: "RFID-BK006" }
+        ];
+
+        // MARC Records Database
+        let marcRecords = [
+            { id: "MARC001", title: "Data Structures & Algorithms", author: "Thomas Cormen", isbn: "9780262033848", publisher: "MIT Press", year: "2022", pages: "1312 p.", subject: "Computer Science", callNo: "QA76.9.D35 C67", format: "MARC21", lastModified: "2025-01-15" },
+            { id: "MARC002", title: "Modern Artificial Intelligence", author: "Stuart Russell", isbn: "9780136042594", publisher: "Pearson", year: "2021", pages: "1152 p.", subject: "AI", callNo: "Q335 .R86", format: "MARCXML", lastModified: "2025-02-10" },
+            { id: "MARC003", title: "The Pragmatic Programmer", author: "David Thomas", isbn: "9780201616224", publisher: "Addison-Wesley", year: "2019", pages: "352 p.", subject: "Programming", callNo: "QA76.76.D47 T46", format: "MARC21", lastModified: "2025-03-01" }
+        ];
+
+        let currentSelectedBook = null;
+        let currentHighlightedRow = null;
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function updateStats() {
+            // Simulate large library feel
+            const totalBooks = books.length;
+            const totalMarcRecords = marcRecords.length;
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card"><h4>MARC Records</h4><div class="number">${totalMarcRecords}</div></div>
+                <div class="stat-card"><h4>Books in Catalog</h4><div class="number">${totalBooks}+</div></div>
+                <div class="stat-card"><h4>Formats Supported</h4><div class="number">3</div></div>
+                <div class="stat-card"><h4>Ready to Export</h4><div class="number">✓</div></div>
+            `;
+        }
+
+        // NEW: Smart Search Function - searches by ISBN, RFID, Title, Author, Book ID
+        function searchBook() {
+            const searchValue = document.getElementById('quickBookSearch').value.trim().toLowerCase();
+            if (!searchValue) {
+                showToast('Please enter or scan ISBN, RFID, title, or author', true);
+                return;
+            }
+            
+            const foundBook = books.find(book => 
+                book.title.toLowerCase().includes(searchValue) ||
+                book.author.toLowerCase().includes(searchValue) ||
+                book.isbn.toLowerCase().includes(searchValue) ||
+                book.id.toLowerCase().includes(searchValue) ||
+                (book.rfid && book.rfid.toLowerCase().includes(searchValue))
+            );
+            
+            const resultDiv = document.getElementById('quickSearchResult');
+            
+            if (foundBook) {
+                currentSelectedBook = foundBook;
+                resultDiv.innerHTML = `
+                    <div class="result-row">
+                        <div class="result-info">
+                            <div class="result-title">📖 ${foundBook.title}</div>
+                            <div class="result-detail">✍️ Author: ${foundBook.author} | 📚 ID: ${foundBook.id}</div>
+                            <div class="result-detail">🔢 ISBN: ${foundBook.isbn} | 🏷️ RFID: ${foundBook.rfid || 'Not assigned'}</div>
+                            <div class="result-detail">📅 Year: ${foundBook.year} | 🏢 Publisher: ${foundBook.publisher}</div>
+                        </div>
+                        <div class="result-actions">
+                            <button class="btn btn-primary btn-sm" onclick="exportCurrentBook()">📤 Export MARC</button>
+                            <button class="btn btn-outline btn-sm" onclick="previewCurrentBookMARC()">👁️ Preview</button>
+                        </div>
+                    </div>
+                `;
+                resultDiv.classList.add('show');
+                showToast(`✅ Found: ${foundBook.title}`);
+                
+                // Highlight in MARC records table if exists
+                highlightMARCInTable(foundBook.title);
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="not-found-message">
+                        ❌ No book found matching "${escapeHtml(searchValue)}"
+                        <br><small>Try searching by ISBN, RFID tag, Book ID, Title, or Author name</small>
+                    </div>
+                `;
+                resultDiv.classList.add('show');
+                showToast(`❌ No book found for: ${searchValue}`, true);
+                currentSelectedBook = null;
+            }
+        }
+
+        function highlightMARCInTable(title) {
+            const rows = document.querySelectorAll('#marcRecordsBody tr');
+            let found = false;
+            rows.forEach(row => {
+                const rowTitle = row.querySelector('td:nth-child(2)')?.innerText.toLowerCase();
+                if (rowTitle && rowTitle === title.toLowerCase()) {
+                    if (currentHighlightedRow) {
+                        currentHighlightedRow.classList.remove('highlight');
+                    }
+                    row.classList.add('highlight');
+                    currentHighlightedRow = row;
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    found = true;
+                } else {
+                    row.classList.remove('highlight');
+                }
+            });
+            if (!found && currentHighlightedRow) {
+                currentHighlightedRow.classList.remove('highlight');
+                currentHighlightedRow = null;
+            }
+        }
+
+        function previewCurrentBookMARC() {
+            if (currentSelectedBook) {
+                const format = document.getElementById('marcFormat').value;
+                let marcData = generateMARCData(currentSelectedBook, format);
+                document.getElementById('marcPreview').textContent = marcData;
+                showToast(`Previewing MARC data for "${currentSelectedBook.title}"`);
+            } else {
+                showToast('Please search for a book first', true);
+            }
+        }
+
+        function exportCurrentBook() {
+            if (currentSelectedBook) {
+                exportMARC();
+            } else {
+                showToast('Please search for a book first', true);
+            }
+        }
+
+        function generateMARCData(book, format) {
+            switch(format) {
+                case 'marc21':
+                    return generateMARC21(book);
+                case 'marcxml':
+                    return generateMARCXML(book);
+                case 'json':
+                    return generateJSON(book);
+                default:
+                    return generateMARC21(book);
+            }
+        }
+
+        function generateMARC21(book) {
+            return `=LDR  00000nam a2200000 a 4500
+=001  ${book.id}
+=010  \\\\$a ${book.isbn || ''}
+=020  \\\\$a ${book.isbn || ''}
+=100  1\\$a ${book.author}
+=245  10$a${book.title}
+=250  \\\\$a ${book.edition || '1st ed.'}
+=260  \\\\$a${book.publisher || '[s.n.]'}$c${book.year || '2024'}
+=300  \\\\$a${book.pages || '1 v.'}
+=504  \\\\$a Includes bibliographical references.
+=650  \\0$a${book.category || 'General'}
+=852  \\\\$a ${book.callNo || ''}
+=952  \\\\$a ${book.rfid || ''}`;
+        }
+
+        function generateMARCXML(book) {
+            return `<?xml version="1.0" encoding="UTF-8"?>
+<marc:record xmlns:marc="http://www.loc.gov/MARC21/slim">
+  <marc:leader>00000nam a2200000 a 4500</marc:leader>
+  <marc:datafield tag="001" ind1=" " ind2=" ">
+    <marc:subfield code="a">${book.id}</marc:subfield>
+  </marc:datafield>
+  <marc:datafield tag="010" ind1=" " ind2=" ">
+    <marc:subfield code="a">${book.isbn || ''}</marc:subfield>
+  </marc:datafield>
+  <marc:datafield tag="100" ind1="1" ind2=" ">
+    <marc:subfield code="a">${book.author}</marc:subfield>
+  </marc:datafield>
+  <marc:datafield tag="245" ind1="1" ind2="0">
+    <marc:subfield code="a">${book.title}</marc:subfield>
+  </marc:datafield>
+  <marc:datafield tag="260" ind1=" " ind2=" ">
+    <marc:subfield code="a">${book.publisher || '[s.n.]'}</marc:subfield>
+    <marc:subfield code="c">${book.year || '2024'}</marc:subfield>
+  </marc:datafield>
+  <marc:datafield tag="300" ind1=" " ind2=" ">
+    <marc:subfield code="a">${book.pages || '1 v.'}</marc:subfield>
+  </marc:datafield>
+  <marc:datafield tag="650" ind1=" " ind2="0">
+    <marc:subfield code="a">${book.category || 'General'}</marc:subfield>
+  </marc:datafield>
+  <marc:datafield tag="852" ind1=" " ind2=" ">
+    <marc:subfield code="a">${book.callNo || ''}</marc:subfield>
+  </marc:datafield>
+</marc:record>`;
+        }
+
+        function generateJSON(book) {
+            return JSON.stringify({
+                record: {
+                    id: book.id,
+                    title: book.title,
+                    author: book.author,
+                    isbn: book.isbn,
+                    publisher: book.publisher,
+                    year: book.year,
+                    pages: book.pages,
+                    subject: book.category,
+                    callNo: book.callNo,
+                    rfid: book.rfid
+                },
+                marcFields: {
+                    LDR: "00000nam a2200000 a 4500",
+                    "001": book.id,
+                    "010": { a: book.isbn },
+                    "100": { a: book.author },
+                    "245": { a: book.title },
+                    "260": { a: book.publisher, c: book.year },
+                    "300": { a: book.pages },
+                    "650": { a: book.category },
+                    "852": { a: book.callNo }
+                }
+            }, null, 2);
+        }
+
+        window.exportMARC = () => {
+            let book = currentSelectedBook;
+            if (!book) {
+                showToast('Please search for a book first', true);
+                return;
+            }
+            
+            const format = document.getElementById('marcFormat').value;
+            const marcData = generateMARCData(book, format);
+            
+            document.getElementById('marcPreview').textContent = marcData;
+            showToast(`MARC data exported for "${book.title}" in ${format.toUpperCase()} format`);
+            
+            // Download file
+            const blob = new Blob([marcData], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${book.title.replace(/[^a-z0-9]/gi, '_')}.${format === 'marc21' ? 'mrc' : format === 'marcxml' ? 'xml' : 'json'}`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        window.importMARC = () => {
+            const file = document.getElementById('marcFileInput').files[0];
+            if (!file) {
+                showToast('Please select a MARC file', true);
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const content = e.target.result;
+                    let importedBook = null;
+                    
+                    if (file.name.endsWith('.json')) {
+                        const data = JSON.parse(content);
+                        const record = data.record || data;
+                        importedBook = {
+                            id: `BK-${String(books.length + 100)}`,
+                            title: record.title || 'Imported Book',
+                            author: record.author || 'Unknown',
+                            isbn: record.isbn || '',
+                            publisher: record.publisher || '',
+                            year: record.year || 2024,
+                            pages: record.pages || '1 v.',
+                            category: record.subject || record.category || 'General',
+                            callNo: record.callNo || '',
+                            rfid: record.rfid || ''
+                        };
+                    } else {
+                        const titleMatch = content.match(/245\s+10\$a([^\n]+)/);
+                        const authorMatch = content.match(/100\s+1\\\$a([^\n]+)/);
+                        const isbnMatch = content.match(/010\s+\\\\\$a([^\n]+)/);
+                        
+                        importedBook = {
+                            id: `BK-${String(books.length + 100)}`,
+                            title: titleMatch ? titleMatch[1].trim() : 'Imported Book',
+                            author: authorMatch ? authorMatch[1].trim() : 'Unknown',
+                            isbn: isbnMatch ? isbnMatch[1].trim() : '',
+                            publisher: '',
+                            year: 2024,
+                            pages: '1 v.',
+                            category: 'General',
+                            callNo: '',
+                            rfid: ''
+                        };
+                    }
+                    
+                    if (importedBook) {
+                        books.push(importedBook);
+                        const newMarcRecord = {
+                            id: `MARC${String(marcRecords.length + 1).padStart(3, '0')}`,
+                            title: importedBook.title,
+                            author: importedBook.author,
+                            isbn: importedBook.isbn,
+                            publisher: importedBook.publisher,
+                            year: importedBook.year,
+                            pages: importedBook.pages,
+                            subject: importedBook.category,
+                            callNo: importedBook.callNo,
+                            format: file.name.split('.').pop().toUpperCase(),
+                            lastModified: new Date().toISOString().split('T')[0]
+                        };
+                        marcRecords.push(newMarcRecord);
+                        renderMARCRecordsTable();
+                        updateStats();
+                        showToast(`Imported: ${importedBook.title}`);
+                        document.getElementById('marcPreview').textContent = content.substring(0, 1000) + (content.length > 1000 ? '\n... (truncated)' : '');
+                    }
+                } catch (err) {
+                    showToast('Error parsing MARC file', true);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        window.copyMARCPreview = () => {
+            const preview = document.getElementById('marcPreview').textContent;
+            navigator.clipboard.writeText(preview);
+            showToast('MARC data copied to clipboard');
+        };
+
+        function renderMARCRecordsTable() {
+            const tbody = document.getElementById('marcRecordsBody');
+            tbody.innerHTML = marcRecords.map(record => `
+                <tr>
+                    <td><code>${record.id}</code></td>
+                    <td><strong>${escapeHtml(record.title)}</strong></td>
+                    <td>${record.author}</td>
+                    <td>${record.isbn || '-'}</td>
+                    <td><span class="badge badge-info">${record.format}</span></td>
+                    <td>${record.lastModified}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="viewMARC('${record.id}')">View</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteMARCRecord('${record.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.viewMARC = (recordId) => {
+            const record = marcRecords.find(r => r.id === recordId);
+            if (record) {
+                const marcData = generateMARC21({
+                    id: record.id,
+                    title: record.title,
+                    author: record.author,
+                    isbn: record.isbn,
+                    publisher: record.publisher,
+                    year: record.year,
+                    pages: record.pages,
+                    category: record.subject,
+                    callNo: record.callNo
+                });
+                document.getElementById('marcPreview').textContent = marcData;
+                showToast(`Viewing MARC record: ${record.title}`);
+                
+                // Also search in books
+                document.getElementById('quickBookSearch').value = record.title;
+                searchBook();
+            }
+        };
+
+        window.deleteMARCRecord = (recordId) => {
+            if (confirm('Are you sure you want to delete this MARC record?')) {
+                marcRecords = marcRecords.filter(r => r.id !== recordId);
+                renderMARCRecordsTable();
+                updateStats();
+                showToast('MARC record deleted');
+            }
+        };
+
+        window.openCreateMARCRecord = () => {
+            document.getElementById('marcRecordModal').classList.add('active');
+        };
+
+        function clearBookSearch() {
+            document.getElementById('quickBookSearch').value = '';
+            document.getElementById('quickSearchResult').classList.remove('show');
+            document.getElementById('quickSearchResult').innerHTML = '';
+            if (currentHighlightedRow) {
+                currentHighlightedRow.classList.remove('highlight');
+                currentHighlightedRow = null;
+            }
+            currentSelectedBook = null;
+            showToast('Search cleared');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+            });
+        }
+
+        document.getElementById('marcRecordForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newRecord = {
+                id: `MARC${String(marcRecords.length + 1).padStart(3, '0')}`,
+                title: document.getElementById('marcTitle').value,
+                author: document.getElementById('marcAuthor').value,
+                isbn: document.getElementById('marcISBN').value,
+                publisher: document.getElementById('marcPublisher').value,
+                year: document.getElementById('marcYear').value,
+                pages: document.getElementById('marcPages').value,
+                subject: document.getElementById('marcSubject').value,
+                callNo: document.getElementById('marcCallNo').value,
+                format: 'MARC21',
+                lastModified: new Date().toISOString().split('T')[0]
+            };
+            marcRecords.push(newRecord);
+            
+            // Also add to books catalog
+            const newBook = {
+                id: `BK-${String(books.length + 100)}`,
+                title: newRecord.title,
+                author: newRecord.author,
+                isbn: newRecord.isbn,
+                publisher: newRecord.publisher,
+                year: newRecord.year,
+                pages: newRecord.pages,
+                category: newRecord.subject,
+                callNo: newRecord.callNo,
+                rfid: ''
+            };
+            books.push(newBook);
+            
+            renderMARCRecordsTable();
+            updateStats();
+            closeModal('marcRecordModal');
+            document.getElementById('marcRecordForm').reset();
+            showToast(`MARC record created for "${newRecord.title}"`);
+            
+            // Auto-search the new book
+            document.getElementById('quickBookSearch').value = newRecord.title;
+            searchBook();
+        });
+
+        // Setup Enter key search
+        function setupQuickSearchListener() {
+            const quickSearch = document.getElementById('quickBookSearch');
+            quickSearch.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchBook();
+                }
+            });
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Initialize
+        updateStats();
+        renderMARCRecordsTable();
+        setupQuickSearchListener();
+
+        window.closeModal = closeModal;
+        window.exportMARC = exportMARC;
+        window.importMARC = importMARC;
+        window.copyMARCPreview = copyMARCPreview;
+        window.viewMARC = viewMARC;
+        window.deleteMARCRecord = deleteMARCRecord;
+        window.openCreateMARCRecord = openCreateMARCRecord;
+        window.searchBook = searchBook;
+        window.clearBookSearch = clearBookSearch;
+        window.exportCurrentBook = exportCurrentBook;
+        window.previewCurrentBookMARC = previewCurrentBookMARC;
+    </script>
+</body>
+</html>
