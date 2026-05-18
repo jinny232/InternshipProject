@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LMS Pro - Library Management Shell</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #eef2ff;
+            --bg: #f8fafc;
+            --sidebar: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --hover-bg: #f1f5f9;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background: var(--bg); 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* Sidebar Styling with SCROLL */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+            /* SCROLL PROPERTIES ADDED */
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+
+        /* Custom scrollbar styling for better appearance */
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: var(--border);
+            border-radius: 10px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Inner content wrapper for proper padding */
+        .sidebar-content {
+            padding: 1.75rem 1.5rem;
+            flex: 1;
+        }
+
+        .logo { 
+            font-weight: 800; 
+            font-size: 1.5rem; 
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 2rem;
+            letter-spacing: -0.3px;
+        }
+
+        .nav-group { 
+            margin-bottom: 1.5rem; 
+        }
+        
+        .nav-label { 
+            font-size: 0.7rem; 
+            font-weight: 700; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            margin-bottom: 0.75rem; 
+            display: block;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-btn {
+            display: block; 
+            width: 100%; 
+            padding: 0.7rem 1rem; 
+            border-radius: 0.75rem; 
+            margin-bottom: 0.25rem;
+            text-align: left; 
+            background: none; 
+            border: none; 
+            color: var(--text-muted); 
+            cursor: pointer;
+            font-size: 0.9rem; 
+            font-weight: 500; 
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .nav-btn:hover { 
+            background: var(--primary-light); 
+            color: var(--primary); 
+        }
+        
+        .nav-btn.active { 
+            background: var(--primary-light); 
+            color: var(--primary); 
+            font-weight: 600;
+        }
+
+        /* Content Area */
+        .content-container { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: var(--bg);
+        }
+        
+        #main-frame { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            background: var(--bg);
+        }
+
+        /* Footer / Logout section */
+        .nav-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .logout-btn {
+            color: #ef4444 !important;
+        }
+
+        .logout-btn:hover {
+            background: #fef2f2 !important;
+            color: #dc2626 !important;
+        }
+
+        /* Tooltip / Status indicator */
+        .status-badge {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .sidebar {
+                width: 240px;
+            }
+            .sidebar-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-content">
+            <div class="logo">
+                RFID LIB
+            </div>
+            
+            <div class="nav-group">
+                <span class="nav-label">Overview</span>
+                <button class="nav-btn active" onclick="changePage('dashboard.html', this)">
+                    📊 Dashboard
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <span class="nav-label">Inventory Management</span>
+                <button class="nav-btn" onclick="changePage('Book/index.html', this)">
+                    📖 Book Management
+                </button>
+                <button class="nav-btn" onclick="changePage('Book/Category/index.html', this)">
+                    📁 Category Management
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <span class="nav-label">User Management</span>
+                <button class="nav-btn" onclick="changePage('Patron/index.html', this)">
+                    👥 Patron Management
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <span class="nav-label">Circulation Operations</span>
+                <button class="nav-btn" onclick="changePage('circulation.html', this)">
+                    🔄 Check In / Check Out
+                </button>
+            </div>
+            
+            <div class="nav-group">
+                <span class="nav-label">RFID & MARC</span>
+                <button class="nav-btn" onclick="changePage('rfid/index.html', this)">🏷️ RFID Library</button>
+                <button class="nav-btn" onclick="changePage('marc/index.html', this)">📄 MARC Management</button>
+            </div>
+
+          <div class="nav-group">
+    <span class="nav-label">Staff Tools</span>
+    <button class="nav-btn" onclick="changePage('staff/announcements.html', this)">
+        📢 Announcements
+    </button>
+    <button class="nav-btn" onclick="changePage('staff/audit-trail.html', this)">
+        📝 Audit Trail
+    </button>
+</div>
+
+<div class="nav-group">
+    <span class="nav-label">System Configuration</span>
+    <button class="nav-btn" onclick="changePage('settings/rfid-hardware.html', this)">
+        📡 RFID Hardware
+    </button>
+</div>
+
+            <div class="nav-footer">
+                <button class="nav-btn logout-btn" onclick="logout()">
+                    🚪 Logout
+                </button>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-top: 1rem;">
+                    <span class="status-badge"></span> System Online
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="content-container">
+        <iframe src="dashboard.html" id="main-frame" name="main-frame" title="LMS Main Content"></iframe>
+    </div>
+
+    <script>
+        // Navigation function to load pages in iframe
+        function changePage(filePath, element) {
+            // Update the iframe source
+            const iframe = document.getElementById('main-frame');
+            iframe.src = filePath;
+            
+            // Update active button styling
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            // Optional: Store current page in session storage
+            sessionStorage.setItem('currentPage', filePath);
+            
+            // Smooth scroll to show the active button if it's out of view
+            setTimeout(() => {
+                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 50);
+        }
+
+        // Logout function
+        function logout() {
+            if(confirm("Are you sure you want to log out?")) {
+                // Redirect to login/verification page
+                window.parent.location.href = "../Verification Step/index.html";
+            }
+        }
+
+        // Load last visited page on startup (optional)
+        document.addEventListener('DOMContentLoaded', function() {
+            const lastPage = sessionStorage.getItem('currentPage');
+            if (lastPage && lastPage !== 'dashboard.html') {
+                const iframe = document.getElementById('main-frame');
+                iframe.src = lastPage;
+                
+                // Find and activate the corresponding button
+                const buttons = document.querySelectorAll('.nav-btn');
+                for (let btn of buttons) {
+                    const onclickAttr = btn.getAttribute('onclick');
+                    if (onclickAttr && onclickAttr.includes(lastPage)) {
+                        btn.classList.add('active');
+                        // Scroll to show the active button
+                        setTimeout(() => {
+                            btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                        break;
+                    }
+                }
+            }
+            
+            // Ensure sidebar scroll is enabled and working
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                // Additional check for scroll functionality
+                console.log('Sidebar scroll enabled - height:', sidebar.scrollHeight, 'clientHeight:', sidebar.clientHeight);
+            }
+        });
+    </script>
+</body>
+</html>
