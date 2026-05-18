@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Details View - LMS</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body { font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* Header Actions */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .btn { padding: 10px 22px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        .btn-edit { background: var(--primary); color: white; }
+        .btn-save { background: #10b981; color: white; display: none; }
+        .btn-back { background: white; color: var(--text-muted); border: 1px solid var(--border); }
+
+        /* Layout Grid */
+        .detail-grid { display: grid; grid-template-columns: 320px 1fr; gap: 2rem; }
+
+        /* Sidebar */
+        .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+        .media-card { background: var(--card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); text-align: center; position: sticky; top: 2rem; }
+        .book-cover { width: 100%; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1rem; object-fit: cover; aspect-ratio: 3/4; }
+        .status-badge { display: block; padding: 8px; border-radius: 8px; font-size: 0.85rem; font-weight: 800; background: #dcfce7; color: #166534; margin-bottom: 1rem; }
+
+        /* Main Content */
+        .info-card { background: var(--card); padding: 2rem; border-radius: 16px; border: 1px solid var(--border); }
+        .section-title { font-size: 1.1rem; color: var(--primary); border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin: 2rem 0 1.2rem 0; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .section-title:first-child { margin-top: 0; }
+
+        /* Data Display Grid */
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .data-item { display: flex; flex-direction: column; gap: 4px; }
+        .label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .value { font-size: 1rem; color: var(--text-main); min-height: 1.4rem; line-height: 1.5; }
+
+        /* Edit Mode Styles */
+        .edit-input { display: none; padding: 8px; border: 1px solid var(--primary); border-radius: 6px; font-size: 0.9rem; width: 100%; box-sizing: border-box; background: #f0f7ff; }
+        textarea.edit-input { min-height: 80px; font-family: inherit; }
+        .full-width { grid-column: span 2; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <a href="#" class="btn btn-back">← Back to List</a>
+        <div>
+            <button id="editBtn" class="btn btn-edit" onclick="enableEdit()">Edit Details</button>
+            <button id="saveBtn" class="btn btn-save" onclick="saveChanges()">Save Changes</button>
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <div class="sidebar">
+            <div class="media-card">
+                <img src="img.jpg" alt="Book Cover" class="book-cover">
+                <div class="status-badge">AVAILABLE (ရှိသည်)</div>
+                <div class="data-item" style="text-align: left; margin-bottom: 15px;">
+                    <span class="label">RFID_No</span>
+                    <span class="value" style="font-family: monospace;">E280119120002049</span>
+                </div>
+                <a href="#" class="btn btn-back" style="justify-content: center; background: #f1f5f9; color: var(--primary);">
+                    📖 View e-Book (Digital File)
+                </a>
+            </div>
+        </div>
+
+        <div class="info-card">
+            
+            <div class="section-title">Primary Record (အခြေခံအချက်အလက်)</div>
+            <div class="data-grid">
+                <div class="data-item full-width">
+                    <span class="label">စာအုပ်အမည် (Title)</span>
+                    <span class="value editable-text">The Pragmatic Programmer</span>
+                    <input type="text" class="edit-input" value="The Pragmatic Programmer">
+                </div>
+                <div class="data-item">
+                    <span class="label">ခေါင်းစဉ်ခွဲ (Sub Title)</span>
+                    <span class="value editable-text">From Journeyman to Master</span>
+                    <input type="text" class="edit-input" value="From Journeyman to Master">
+                </div>
+                <div class="data-item">
+                    <span class="label">ခေါင်းစဉ်ပြိုင် (Parallel Title)</span>
+                    <span class="value editable-text">-</span>
+                    <input type="text" class="edit-input" value="-">
+                </div>
+                <div class="data-item">
+                    <span class="label">ခေါင်းစဉ်အမည်ကွဲ (Other Title)</span>
+                    <span class="value editable-text">-</span>
+                    <input type="text" class="edit-input" value="-">
+                </div>
+                <div class="data-item">
+                    <span class="label">မူရင်းခေါင်းစဉ် (Original Title)</span>
+                    <span class="value editable-text">The Pragmatic Programmer</span>
+                    <input type="text" class="edit-input" value="The Pragmatic Programmer">
+                </div>
+
+                <div class="data-item">
+                    <span class="label">အဓိကစာရေးသူ (Key Author)</span>
+                    <span class="value editable-text">Andrew Hunt</span>
+                    <input type="text" class="edit-input" value="Andrew Hunt">
+                </div>
+                <div class="data-item">
+                    <span class="label">အခြား စာရေးသူ (Other Author)</span>
+                    <span class="value editable-text">David Thomas</span>
+                    <input type="text" class="edit-input" value="David Thomas">
+                </div>
+                <div class="data-item">
+                    <span class="label">ဘာသာပြန်သူ (Translator)</span>
+                    <span class="value editable-text">-</span>
+                    <input type="text" class="edit-input" value="-">
+                </div>
+                <div class="data-item">
+                    <span class="label">တည်းဖြတ်သူ (Editor)</span>
+                    <span class="value editable-text">-</span>
+                    <input type="text" class="edit-input" value="-">
+                </div>
+                <div class="data-item">
+                    <span class="label">ပုံဆွဲသူ (Illustrator)</span>
+                    <span class="value editable-text">-</span>
+                    <input type="text" class="edit-input" value="-">
+                </div>
+                <div class="data-item">
+                    <span class="label">စီစဉ်သူ/ စုစည်းသူ (Compiler)</span>
+                    <span class="value editable-text">-</span>
+                    <input type="text" class="edit-input" value="-">
+                </div>
+            </div>
+
+            <div class="section-title">Book Details (စာအုပ်အသေးစိတ်)</div>
+            <div class="data-grid">
+                <div class="data-item">
+                    <span class="label">ထုတ်ဝေသူ (Publisher)</span>
+                    <span class="value editable-text">Addison-Wesley</span>
+                    <input type="text" class="edit-input" value="Addison-Wesley">
+                </div>
+                <div class="data-item">
+                    <span class="label">ဖြန့်ချိသူအမည် (Distributor)</span>
+                    <span class="value editable-text">-</span>
+                    <input type="text" class="edit-input" value="-">
+                </div>
+                <div class="data-item">
+                    <span class="label">ထုတ်ဝေသည့်နေရာ (Place)</span>
+                    <span class="value editable-text">Boston</span>
+                    <input type="text" class="edit-input" value="Boston">
+                </div>
+                <div class="data-item">
+                    <span class="label">ထုတ်ဝေသည့်နိုင်ငံ (Country)</span>
+                    <span class="value editable-text">USA</span>
+                    <input type="text" class="edit-input" value="USA">
+                </div>
+                <div class="data-item">
+                    <span class="label">ထုတ်ဝေသည့်ခုနှစ် (Year)</span>
+                    <span class="value editable-text">1999</span>
+                    <input type="text" class="edit-input" value="1999">
+                </div>
+                <div class="data-item">
+                    <span class="label">ထုတ်ဝေသည့်အုပ်ရေ (Nos. of Published)</span>
+                    <span class="value editable-text">5000</span>
+                    <input type="text" class="edit-input" value="5000">
+                </div>
+                <div class="data-item">
+                    <span class="label">စာမျက်နှာ (No of Pages)</span>
+                    <span class="value editable-text">352</span>
+                    <input type="text" class="edit-input" value="352">
+                </div>
+                <div class="data-item">
+                    <span class="label">ပုံများ (Illustrations)</span>
+                    <span class="value editable-text">Yes</span>
+                    <input type="text" class="edit-input" value="Yes">
+                </div>
+                <div class="data-item">
+                    <span class="label">အရွယ်အစား (Size)</span>
+                    <span class="value editable-text">7.4 x 0.9 x 9.1 inches</span>
+                    <input type="text" class="edit-input" value="7.4 x 0.9 x 9.1 inches">
+                </div>
+                <div class="data-item">
+                    <span class="label">တန်ဖိုး (Price)</span>
+                    <span class="value editable-text">45.00 USD</span>
+                    <input type="text" class="edit-input" value="45.00 USD">
+                </div>
+            </div>
+
+            <div class="section-title">References & Identifiers</div>
+            <div class="data-grid">
+                <div class="data-item">
+                    <span class="label">ISBN</span>
+                    <span class="value editable-text">9780201616224</span>
+                    <input type="text" class="edit-input" value="9780201616224">
+                </div>
+                <div class="data-item">
+                    <span class="label">LCCN</span>
+                    <span class="value editable-text">99-041357</span>
+                    <input type="text" class="edit-input" value="99-041357">
+                </div>
+                <div class="data-item">
+                    <span class="label">အဓိကစကားလုံး (Keywords)</span>
+                    <span class="value editable-text">Programming, Software Engineering</span>
+                    <input type="text" class="edit-input" value="Programming, Software Engineering">
+                </div>
+                <div class="data-item">
+                    <span class="label">ရည်ညွှန်းအမျိုးအစား (Reference Type)</span>
+                    <span class="value editable-text">Educational</span>
+                    <input type="text" class="edit-input" value="Educational">
+                </div>
+                
+                <div class="data-item full-width">
+                    <span class="label">အနှစ်ချုပ် (Summary / Annotation)</span>
+                    <span class="value editable-text">A comprehensive guide for software developers.</span>
+                    <textarea class="edit-input">A comprehensive guide for software developers.</textarea>
+                </div>
+
+                <div class="data-item">
+                    <span class="label">မာတိကာ (Index)</span>
+                    <span class="value editable-text">Available at page 340</span>
+                    <input type="text" class="edit-input" value="Available at page 340">
+                </div>
+                <div class="data-item">
+                    <span class="label">Book Review</span>
+                    <span class="value editable-text">Highly recommended for all levels.</span>
+                    <input type="text" class="edit-input" value="Highly recommended for all levels.">
+                </div>
+
+                <div class="data-item">
+                    <span class="label">မှတ်ချက် (Remark)</span>
+                    <span class="value editable-text">-</span>
+                    <input type="text" class="edit-input" value="-">
+                </div>
+                <div class="data-item">
+                    <span class="label">မှတ်စု (Notes)</span>
+                    <span class="value editable-text">-</span>
+                    <input type="text" class="edit-input" value="-">
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function enableEdit() {
+        document.getElementById('editBtn').style.display = 'none';
+        document.getElementById('saveBtn').style.display = 'flex';
+
+        const labels = document.querySelectorAll('.editable-text');
+        const inputs = document.querySelectorAll('.edit-input');
+
+        labels.forEach(l => l.style.display = 'none');
+        inputs.forEach(i => i.style.display = 'block');
+    }
+
+    function saveChanges() {
+        const labels = document.querySelectorAll('.editable-text');
+        const inputs = document.querySelectorAll('.edit-input');
+
+        inputs.forEach((input, index) => {
+            labels[index].innerText = input.value;
+            input.style.display = 'none';
+            labels[index].style.display = 'block';
+        });
+
+        document.getElementById('editBtn').style.display = 'flex';
+        document.getElementById('saveBtn').style.display = 'none';
+        
+        console.log("Data saved.");
+    }
+</script>
+
+</body>
+</html>
