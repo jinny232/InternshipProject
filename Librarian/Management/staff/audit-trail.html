@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Trail | System Logs & Sub-Admin Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #0ea5e9;
+            --gray-50: #f8fafc;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --white: #ffffff;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-50); padding: 1.5rem; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .tabs { display: flex; gap: 0.5rem; border-bottom: 2px solid var(--gray-200); margin-bottom: 1.5rem; }
+        .tab { padding: 0.5rem 1.5rem; border: none; background: none; cursor: pointer; font-weight: 600; color: var(--gray-600); }
+        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; }
+        .card { background: var(--white); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-md); }
+        .btn { padding: 0.6rem 1.2rem; border-radius: 0.5rem; border: none; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: var(--gray-100); border: 1px solid var(--gray-200); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--gray-200); }
+        th { background: var(--gray-50); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; color: var(--gray-600); }
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 2rem; font-size: 0.65rem; font-weight: 600; }
+        .badge-admin { background: #e0e7ff; color: #3730a3; }
+        .badge-subadmin { background: #d1fae5; color: #065f46; }
+        .filter-bar { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .filter-bar input, .filter-bar select { padding: 0.5rem; border: 1px solid var(--gray-200); border-radius: 0.5rem; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 1rem; max-width: 500px; width: 90%; padding: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid var(--gray-200); border-radius: 0.5rem; }
+        .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--gray-800); color: white; padding: 0.75rem 1.5rem; border-radius: 2rem; animation: slideIn 0.3s; z-index: 1100; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>📝 Audit Trail & Access Management</h1>
+                <p style="color: var(--gray-600);">Track all system activities and manage sub-admin users</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddSubAdminModal()">+ Add Sub-Admin</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('audit')">📋 Audit Log</button>
+            <button class="tab" onclick="switchTab('admins')">👥 Sub-Admin Accounts</button>
+        </div>
+
+        <!-- Audit Log Tab -->
+        <div id="auditTab">
+            <div class="card">
+                <div class="filter-bar">
+                    <input type="text" id="searchLog" placeholder="Search by user, action, or details..." onkeyup="filterLogs()">
+                    <select id="actionFilter" onchange="filterLogs()">
+                        <option value="all">All Actions</option>
+                        <option value="BOOK">Book Actions</option>
+                        <option value="PATRON">Patron Actions</option>
+                        <option value="CIRCULATION">Circulation Actions</option>
+                        <option value="RFID">RFID Actions</option>
+                        <option value="ADMIN">Admin Actions</option>
+                    </select>
+                    <input type="date" id="dateFilter" onchange="filterLogs()">
+                    <button class="btn btn-outline" onclick="exportLogs()">📎 Export CSV</button>
+                    <button class="btn btn-outline" onclick="clearLogs()">🗑️ Clear Logs</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table id="auditTable">
+                        <thead>
+                            <tr><th>Timestamp</th><th>User</th><th>Role</th><th>Action</th><th>Details</th><th>IP Address</th></tr>
+                        </thead>
+                        <tbody id="auditBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub-Admin Management Tab -->
+        <div id="adminsTab" style="display: none;">
+            <div class="card">
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr><th>Username</th><th>Email</th><th>Role</th><th>Permissions</th><th>Created</th><th>Last Login</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="adminsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Sub-Admin Modal -->
+    <div id="subAdminModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Add Sub-Admin</h3>
+            <form id="subAdminForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="adminUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="adminEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="adminPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <select id="adminPermissions">
+                        <option value="basic">View Only</option>
+                        <option value="circulation"> Borrow/Return only</option>
+                        <option value="catalog">Add/Edit Books</option>
+                        <option value="full">All except user management</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Create Sub-Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Audit Logs Database
+        let auditLogs = [];
+        let subAdmins = [];
+
+        function loadData() {
+            // Load audit logs
+            const storedLogs = localStorage.getItem('audit_logs');
+            if (storedLogs) {
+                auditLogs = JSON.parse(storedLogs);
+            } else {
+                // Sample logs
+                auditLogs = [
+                    { id: 1, timestamp: "2026-05-10 09:30:00", user: "Admin", role: "admin", action: "LOGIN", details: "Admin logged in", ip: "192.168.1.100", category: "ADMIN" },
+                    { id: 2, timestamp: "2026-05-10 10:15:00", user: "Admin", role: "admin", action: "BOOK_ADDED", details: "Added 'Clean Code' to inventory", ip: "192.168.1.100", category: "BOOK" },
+                    { id: 3, timestamp: "2026-05-10 10:30:00", user: "Admin", role: "admin", action: "PATRON_CREATED", details: "Created patron: John Smith (PAT-1001)", ip: "192.168.1.100", category: "PATRON" },
+                    { id: 4, timestamp: "2026-05-10 11:00:00", user: "Admin", role: "admin", action: "BOOK_BORROWED", details: "Alice Henderson borrowed 'The Pragmatic Programmer'", ip: "192.168.1.100", category: "CIRCULATION" },
+                    { id: 5, timestamp: "2026-05-10 11:30:00", user: "Admin", role: "admin", action: "RFID_ISSUED", details: "Issued RFID tag RFID-CARD-003 to PAT-1002", ip: "192.168.1.100", category: "RFID" }
+                ];
+                saveAuditLogs();
+            }
+
+            // Load sub-admins
+            const storedAdmins = localStorage.getItem('sub_admins');
+            if (storedAdmins) {
+                subAdmins = JSON.parse(storedAdmins);
+            } else {
+                subAdmins = [
+                    { id: 1, username: "librarian1", email: "lib1@library.com", password: "pass123", role: "subadmin", permissions: "circulation", created: "2026-04-01", lastLogin: "2026-05-09" },
+                    { id: 2, username: "cataloger1", email: "cat@library.com", password: "pass123", role: "subadmin", permissions: "catalog", created: "2026-04-05", lastLogin: "2026-05-08" }
+                ];
+                saveSubAdmins();
+            }
+        }
+
+        function saveAuditLogs() {
+            localStorage.setItem('audit_logs', JSON.stringify(auditLogs));
+        }
+
+        function saveSubAdmins() {
+            localStorage.setItem('sub_admins', JSON.stringify(subAdmins));
+        }
+
+        function addAuditLog(action, details, category = "GENERAL") {
+            const newLog = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString(),
+                user: sessionStorage.getItem('currentUser') || 'Admin',
+                role: sessionStorage.getItem('userRole') || 'admin',
+                action: action,
+                details: details,
+                ip: "127.0.0.1",
+                category: category
+            };
+            auditLogs.unshift(newLog);
+            saveAuditLogs();
+            renderAuditLogs();
+        }
+
+        function renderAuditLogs() {
+            const tbody = document.getElementById('auditBody');
+            let filtered = [...auditLogs];
+            
+            const searchTerm = document.getElementById('searchLog')?.value.toLowerCase();
+            const actionFilter = document.getElementById('actionFilter')?.value;
+            const dateFilter = document.getElementById('dateFilter')?.value;
+            
+            if (searchTerm) {
+                filtered = filtered.filter(log => 
+                    log.user.toLowerCase().includes(searchTerm) || 
+                    log.action.toLowerCase().includes(searchTerm) || 
+                    log.details.toLowerCase().includes(searchTerm)
+                );
+            }
+            if (actionFilter && actionFilter !== 'all') {
+                filtered = filtered.filter(log => log.category === actionFilter);
+            }
+            if (dateFilter) {
+                filtered = filtered.filter(log => log.timestamp.startsWith(dateFilter));
+            }
+            
+            tbody.innerHTML = filtered.map(log => `
+                <tr>
+                    <td>${log.timestamp}</td>
+                    <td><strong>${log.user}</strong></td>
+                    <td><span class="badge ${log.role === 'admin' ? 'badge-admin' : 'badge-subadmin'}">${log.role}</span></td>
+                    <td><strong>${log.action}</strong></td>
+                    <td>${log.details}</td>
+                    <td>${log.ip}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderSubAdmins() {
+            const tbody = document.getElementById('adminsBody');
+            tbody.innerHTML = subAdmins.map(admin => `
+                <tr>
+                    <td><strong>${admin.username}</strong></td>
+                    <td>${admin.email}</td>
+                    <td><span class="badge badge-subadmin">Sub-Admin</span></td>
+                    <td>${admin.permissions}</td>
+                    <td>${admin.created}</td>
+                    <td>${admin.lastLogin || 'Never'}</td>
+                    <td>
+                        <button class="btn-outline" style="padding:0.2rem 0.5rem;" onclick="editSubAdmin(${admin.id})">Edit</button>
+                        <button class="btn-danger" style="padding:0.2rem 0.5rem; background:#fee2e2; color:#dc2626; border:none;" onclick="deleteSubAdmin(${admin.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterLogs() {
+            renderAuditLogs();
+        }
+
+        function exportLogs() {
+            let csvContent = "Timestamp,User,Role,Action,Details,IP\n";
+            auditLogs.forEach(log => {
+                csvContent += `"${log.timestamp}",${log.user},${log.role},${log.action},"${log.details}",${log.ip}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `audit_log_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Logs exported');
+            addAuditLog('EXPORT_LOGS', 'Exported audit logs to CSV', 'ADMIN');
+        }
+
+        function clearLogs() {
+            if (confirm('Clear all audit logs? This action cannot be undone.')) {
+                auditLogs = [];
+                saveAuditLogs();
+                renderAuditLogs();
+                showToast('All logs cleared');
+                addAuditLog('CLEAR_LOGS', 'Cleared all audit logs', 'ADMIN');
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if (tab === 'audit') {
+                document.querySelector('.tab:first-child').classList.add('active');
+                document.getElementById('auditTab').style.display = 'block';
+                document.getElementById('adminsTab').style.display = 'none';
+                renderAuditLogs();
+            } else {
+                document.querySelector('.tab:last-child').classList.add('active');
+                document.getElementById('auditTab').style.display = 'none';
+                document.getElementById('adminsTab').style.display = 'block';
+                renderSubAdmins();
+            }
+        }
+
+        function openAddSubAdminModal() {
+            document.getElementById('modalTitle').innerText = 'Add Sub-Admin User';
+            document.getElementById('subAdminForm').reset();
+            document.getElementById('subAdminModal').classList.add('active');
+        }
+
+        function editSubAdmin(id) {
+            const admin = subAdmins.find(a => a.id === id);
+            if (admin) {
+                document.getElementById('modalTitle').innerText = 'Edit Sub-Admin';
+                document.getElementById('adminUsername').value = admin.username;
+                document.getElementById('adminEmail').value = admin.email;
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminPermissions').value = admin.permissions;
+                document.getElementById('subAdminModal').dataset.editId = id;
+                document.getElementById('subAdminModal').classList.add('active');
+            }
+        }
+
+        document.getElementById('subAdminForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('subAdminModal').dataset.editId;
+            
+            const adminData = {
+                username: document.getElementById('adminUsername').value,
+                email: document.getElementById('adminEmail').value,
+                password: document.getElementById('adminPassword').value,
+                permissions: document.getElementById('adminPermissions').value,
+                role: 'subadmin',
+                created: new Date().toISOString().split('T')[0],
+                lastLogin: null
+            };
+            
+            if (editId) {
+                const index = subAdmins.findIndex(a => a.id == editId);
+                if (index !== -1) {
+                    adminData.id = parseInt(editId);
+                    adminData.created = subAdmins[index].created;
+                    subAdmins[index] = adminData;
+                    addAuditLog('ADMIN_UPDATED', `Updated sub-admin: ${adminData.username}`, 'ADMIN');
+                }
+                delete document.getElementById('subAdminModal').dataset.editId;
+            } else {
+                adminData.id = Date.now();
+                subAdmins.push(adminData);
+                addAuditLog('ADMIN_CREATED', `Created sub-admin: ${adminData.username} with ${adminData.permissions} permissions`, 'ADMIN');
+            }
+            
+            saveSubAdmins();
+            renderSubAdmins();
+            closeModal();
+            showToast(editId ? 'Sub-admin updated' : 'Sub-admin created');
+        });
+
+        function deleteSubAdmin(id) {
+            if (confirm('Remove this sub-admin?')) {
+                const admin = subAdmins.find(a => a.id === id);
+                subAdmins = subAdmins.filter(a => a.id !== id);
+                saveSubAdmins();
+                renderSubAdmins();
+                addAuditLog('ADMIN_DELETED', `Deleted sub-admin: ${admin?.username}`, 'ADMIN');
+                showToast('Sub-admin removed');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('subAdminModal').classList.remove('active');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Initialize
+        loadData();
+        renderAuditLogs();
+
+        window.switchTab = switchTab;
+        window.filterLogs = filterLogs;
+        window.exportLogs = exportLogs;
+        window.clearLogs = clearLogs;
+        window.openAddSubAdminModal = openAddSubAdminModal;
+        window.editSubAdmin = editSubAdmin;
+        window.deleteSubAdmin = deleteSubAdmin;
+        window.closeModal = closeModal;
+        window.addAuditLog = addAuditLog;
+    </script>
+</body>
+</html>
